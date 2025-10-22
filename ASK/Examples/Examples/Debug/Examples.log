@@ -1,3 +1,0 @@
-﻿  Examples.cpp
-I:\ASK\Examples\Examples\Examples.cpp(373,11): warning C4244: '=': conversion from 'double' to 'uint16_t', possible loss of data
-  Examples.vcxproj -> I:\ASK\Examples\Debug\Examples.exe
