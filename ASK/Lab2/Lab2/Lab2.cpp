@@ -121,6 +121,7 @@ int fun4(uint8_t a)
             jmp endd
         notEqual:
             mov al, 1
+
         endd:
         
         mov y1, al
