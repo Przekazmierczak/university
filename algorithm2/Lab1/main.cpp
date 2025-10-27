@@ -34,7 +34,7 @@ struct Linked_list {
             newNode->next->prev = newNode;
             dummy->next = newNode;
             size++;
-            return 1;
+            return 0;
         }
         catch (const std::bad_alloc&) {
             return 1;
@@ -75,17 +75,59 @@ struct Linked_list {
         return 1;
     }
 
-    T atIndex(int index) {
-        return nodeAtIndex(index)->val;
+    T& getFromIndex(int index) {
+        if (index >= size) {
+            throw std::out_of_range("Index out of range");
+        }
+
+        if (index < size / 2) {
+            return getFromIndexFront(index);
+        }
+        return getFromIndexBack(size - index - 1);
     }
 
-    void changeAtIndex(int index, T newValue) {
-        nodeAtIndex(index)->val = newValue;
+    void setToIndex(int index, T newValue) {
+        getFromIndex(index) = newValue;
     }
 
     T& operator[](int index) {
-        return nodeAtIndex(index)->val;
+        return getFromIndex(index);
     }
+
+    template <typename A, typename O>
+    T* find(A searched, int (*cmp)(A, O)) {
+        Node* find = findNode(searched, cmp);
+        
+        if (find != nullptr) return &(find->val);
+
+        return nullptr;
+    }
+
+    template <typename A, typename O>
+    int remove(A searched, int (*cmp)(A, O)) {
+        Node* toRemove = findNode(searched, cmp);
+
+        if (toRemove != nullptr) {
+            toRemove->prev->next = toRemove->next;
+            toRemove->next->prev = toRemove->prev;
+            delete toRemove;
+            size--;
+            return 0;
+        }
+
+        return 1;
+    }
+
+    int addInOrder(T newNodeT, int (*cmp)(T, T)) {
+        try {
+            Node* newNode = new Node(newNodeT);
+            
+            return 0;
+        }
+        catch (const std::bad_alloc&) {
+            return 1;
+        }
+    };
 
     void printList() {
         Node* curr = dummy->next;
@@ -99,32 +141,35 @@ struct Linked_list {
     }
 
     private:
-    Node* nodeAtIndex(int index) {
-        if (index >= size) {
-            throw std::out_of_range("Index out of range");
-        }
-
-        if (index < size / 2) {
-            return nodeAtIndexFront(index);
-        }
-        return nodeAtIndexBack(size - index - 1);
-    }
-
-    Node* nodeAtIndexFront(int index) {
+    T& getFromIndexFront(int index) {
         Node* curr = dummy->next;
         for (int i = 0; i < index; i++) {
             curr = curr->next;
         }
-        return curr;
+        return curr->val;
     }
 
-    Node* nodeAtIndexBack(int index) {
+    T& getFromIndexBack(int index) {
         Node* curr = dummy->prev;
         for (int i = 0; i < index; i++) {
             curr = curr->prev;
         }
 
-        return curr;
+        return curr->val;
+    }
+
+    template <typename A, typename O>
+    Node* findNode(A searched, int (*cmp)(A, O)) {
+        Node* curr = dummy->next;
+
+        while (curr != dummy) {
+            if (cmp(searched, curr->val) == 0) {
+                return curr;
+            }
+            curr = curr->next;
+        }
+
+        return nullptr;
     }
 };
 
@@ -132,6 +177,13 @@ struct Some_object {
     int field_1;
     char field_2;
 };
+
+int compare1(int value, Some_object obj) {
+    if (value == obj.field_1) {
+        return 0;
+    }
+    return 1;
+}
 
 int main () {
     Linked_list <Some_object>* ll = new Linked_list <Some_object>();
@@ -203,8 +255,23 @@ int main () {
     ll->printList();
 
     std::cout << (*ll)[0].field_1 << std::endl;
-    std::cout << ll->atIndex(1).field_1 << std::endl;
+    std::cout << ll->getFromIndex(1).field_1 << std::endl;
     std::cout << (*ll)[2].field_1 << std::endl;
-    std::cout << ll->atIndex(3).field_1 << std::endl;
+    std::cout << ll->getFromIndex(3).field_1 << std::endl;
+
+    std::cout << ll->find(4, compare1)->field_1 << std::endl;
+    std::cout << ll->find(2, compare1)->field_1 << std::endl;
+
+    ll->printList();
+    ll->remove(4, compare1);
+    ll->printList();
+    ll->remove(2, compare1);
+    ll->printList();
+    ll->remove(3, compare1);
+    ll->printList();
+    ll->remove(0, compare1);
+    ll->printList();
+
+
     delete ll;
 }
