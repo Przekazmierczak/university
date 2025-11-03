@@ -15,9 +15,7 @@ struct Linked_list {
     };
 
     T dummyVal;
-
     Node* dummy;
-
     int size = 0;
 
     Linked_list() {
@@ -26,53 +24,26 @@ struct Linked_list {
         dummy->prev = dummy;
     }
 
-    int addFront(T newNodeT) {
-        try {
-            Node* newNode = new Node(newNodeT);
-            newNode->next = dummy->next;
-            newNode->prev = dummy;
-            newNode->next->prev = newNode;
-            dummy->next = newNode;
-            size++;
-            return 0;
-        }
-        catch (const std::bad_alloc&) {
-            return 1;
-        }
-    };
+    int addFront(T newNodeVal) {
+        Node* newNode = createNewNode(newNodeVal);
+        if (newNode == nullptr) return 1;
+        addNodeFront(newNode, dummy);
+        return 0;
+    }
 
-    void addBack(T newNodeT) {
-        Node* newNode = new Node(newNodeT);
-
-        newNode->prev = dummy->prev;
-        newNode->next = dummy;
-        newNode->prev->next = newNode;
-        dummy->prev = newNode;
-        size++;
-    };
+    int addBack(T newNodeVal) {
+        Node* newNode = createNewNode(newNodeVal);
+        if (newNode == nullptr) return 1;
+        addNodeBack(newNode, dummy);
+        return 0;
+    }
 
     int removeFront() {
-        if (dummy->next != dummy) {
-            Node* toRemove = dummy->next;
-            dummy->next = dummy->next->next;
-            dummy->next->prev = dummy;
-            delete toRemove;
-            size--;
-            return 0;
-        }
-        return 1;
+        return removeNodeFront(dummy);
     }
 
     int removeBack() {
-        if (dummy->prev != dummy) {
-            Node* toRemove = dummy->prev;
-            dummy->prev = dummy->prev->prev;
-            dummy->prev->next = dummy;
-            delete toRemove;
-            size--;
-            return 0;
-        }
-        return 1;
+        return removeNodeBack(dummy);
     }
 
     T& getFromIndex(int index) {
@@ -103,8 +74,8 @@ struct Linked_list {
         return nullptr;
     }
 
-    template <typename A, typename O>
-    int remove(A searched, int (*cmp)(A, O)) {
+    template <typename A>
+    int remove(A searched, int (*cmp)(A, T)) {
         Node* toRemove = findNode(searched, cmp);
 
         if (toRemove != nullptr) {
@@ -118,15 +89,16 @@ struct Linked_list {
         return 1;
     }
 
-    int addInOrder(T newNodeT, int (*cmp)(T, T)) {
-        try {
-            Node* newNode = new Node(newNodeT);
-            
-            return 0;
+    int addInOrder(T newNodeVal, int (*cmp)(T, T)) {
+        Node* newNode = createNewNode(newNodeVal);
+        if (newNode == nullptr) return 1;
+
+        Node* curr = dummy->next;
+        while (curr != dummy && cmp(newNode->val, curr->val) > 0) {
+            curr = curr->next;
         }
-        catch (const std::bad_alloc&) {
-            return 1;
-        }
+        addNodeBack(newNode, curr);
+        return 0;
     };
 
     void printList() {
@@ -141,6 +113,55 @@ struct Linked_list {
     }
 
     private:
+    Node* createNewNode(T newNodeVal) {
+        try {
+            return new Node(newNodeVal);
+        }
+        catch (const std::bad_alloc&) {
+            return nullptr;
+        }
+    }
+
+    void addNodeFront(Node* newNode, Node* node) {
+        newNode->next = node->next;
+        newNode->prev = node;
+        newNode->next->prev = newNode;
+        node->next = newNode;
+        size++;
+    }
+
+    void addNodeBack(Node* newNode, Node* node) {
+        newNode->prev = node->prev;
+        newNode->next = node;
+        newNode->prev->next = newNode;
+        node->prev = newNode;
+        size++;
+    }
+
+    int removeNodeFront(Node* node) {
+        if (node->next != dummy) {
+            Node* toRemove = node->next;
+            node->next = node->next->next;
+            node->next->prev = node;
+            delete toRemove;
+            size--;
+            return 0;
+        }
+        return 1;
+    }
+
+    int removeNodeBack(Node* node) {
+        if (node->prev != dummy) {
+            Node* toRemove = node->prev;
+            node->prev = node->prev->prev;
+            node->prev->next = node;
+            delete toRemove;
+            size--;
+            return 0;
+        }
+        return 1;
+    }
+
     T& getFromIndexFront(int index) {
         Node* curr = dummy->next;
         for (int i = 0; i < index; i++) {
@@ -158,8 +179,8 @@ struct Linked_list {
         return curr->val;
     }
 
-    template <typename A, typename O>
-    Node* findNode(A searched, int (*cmp)(A, O)) {
+    template <typename A>
+    Node* findNode(A searched, int (*cmp)(A, T)) {
         Node* curr = dummy->next;
 
         while (curr != dummy) {
@@ -183,6 +204,12 @@ int compare1(int value, Some_object obj) {
         return 0;
     }
     return 1;
+}
+
+int compare2(Some_object new_obj, Some_object list_obj) {
+    if (new_obj.field_1 > list_obj.field_1) return 1;
+    if (new_obj.field_1 < list_obj.field_1) return -1;
+    return 0;
 }
 
 int main () {
@@ -272,6 +299,13 @@ int main () {
     ll->remove(0, compare1);
     ll->printList();
 
+    ll->addInOrder(s2, compare2);
+    ll->addInOrder(s0, compare2);
+    ll->addInOrder(s4, compare2);
+    ll->addInOrder(s3, compare2);
+    ll->addInOrder(s1, compare2);
+    //ll->addInOrder(s0, compare2);
+    ll->printList();
 
     delete ll;
 }
