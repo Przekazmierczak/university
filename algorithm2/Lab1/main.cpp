@@ -30,18 +30,23 @@ struct Linked_list {
         delete dummy;
     }
 
+    enum Status {
+        SUCCESS = 0,
+        FAIL = 1
+    };
+
     int addFront(T newNodeVal) {
         Node* newNode = createNewNode(newNodeVal);
-        if (newNode == nullptr) return 1;
+        if (newNode == nullptr) return FAIL;
         addNodeFront(newNode, dummy);
-        return 0;
+        return SUCCESS;
     }
 
     int addBack(T newNodeVal) {
         Node* newNode = createNewNode(newNodeVal);
-        if (newNode == nullptr) return 1;
+        if (newNode == nullptr) return FAIL;
         addNodeBack(newNode, dummy);
-        return 0;
+        return SUCCESS;
     }
 
     int removeFront() {
@@ -71,8 +76,8 @@ struct Linked_list {
         return at(index);
     }
 
-    template <typename A, typename O>
-    T* find(A searched, int (*cmp)(const A&, const O&)) const {
+    template <typename A>
+    T* find(A searched, int (*cmp)(const A&, const T&)) const {
         Node* find = findNode(searched, cmp);
         
         if (find != nullptr) return &(find->val);
@@ -81,27 +86,27 @@ struct Linked_list {
     }
 
     template <typename A>
-    int remove(A searched, int (*cmp)(const A&, const T&)) {
+    int findRemove(A searched, int (*cmp)(const A&, const T&)) {
         Node* node = findNode(searched, cmp);
 
         if (node != nullptr) {
             removeNode(node);
-            return 0;
+            return SUCCESS;
         }
 
-        return 1;
+        return FAIL;
     }
 
     int insertOrdered(T newNodeVal, int (*cmp)(const T&, const T&)) {
         Node* newNode = createNewNode(newNodeVal);
-        if (newNode == nullptr) return 1;
+        if (newNode == nullptr) return FAIL;
 
         Node* curr = dummy->next;
         while (curr != dummy && cmp(newNode->val, curr->val) > 0) {
             curr = curr->next;
         }
         addNodeBack(newNode, curr);
-        return 0;
+        return SUCCESS;
     };
 
     void clear() {
@@ -158,9 +163,9 @@ struct Linked_list {
             node->next->prev = node->prev;
             delete node;
             size--;
-            return 0;
+            return SUCCESS;
         }
-        return 1;
+        return FAIL;
     }
 
     T& getFromIndexFront(int index) const {
@@ -195,60 +200,189 @@ struct Linked_list {
     }
 };
 
-struct Some_object {
+struct SomeObject {
     int field_1;
     char field_2;
 };
 
-int compare1(const int& value, const Some_object& obj) {
+int compare1(const int& value, const SomeObject& obj) {
     if (value == obj.field_1) {
         return 0;
     }
     return 1;
 }
 
-int compare2(const Some_object& new_obj, const Some_object& list_obj) {
+int compare2(const SomeObject& new_obj, const SomeObject& list_obj) {
     if (new_obj.field_1 > list_obj.field_1) return 1;
     if (new_obj.field_1 < list_obj.field_1) return -1;
     return 0;
 }
 
-std::string toStringObj(const Some_object& obj) {
-    return std::to_string(obj.field_1);
+std::string toStringObj(const SomeObject& obj) {
+    return "(" + std::to_string(obj.field_1) + ", " + obj.field_2 + ")";
 }
 
 int main() {
-    Linked_list <Some_object>* ll = new Linked_list <Some_object>();
+    Linked_list <SomeObject>* ll = new Linked_list <SomeObject>();
 
-    Some_object s0 = { 0, 'a' };
-    Some_object s1 = { 1, 'b' };
-    Some_object s2 = { 2, 'c' };
-    Some_object s3 = { 3, 'd' };
-    Some_object s4 = { 4, 'e' };
+    SomeObject s0 = { 0, 'a' };
+    SomeObject s1 = { 1, 'b' };
+    SomeObject s2 = { 2, 'c' };
+    SomeObject s3 = { 3, 'd' };
+    SomeObject s4 = { 4, 'e' };
 
+    // ---- Test addFront() and addBack() methods ----
     ll->addFront(s0);
+    // Expected: [0]
     assert((*ll)[0].field_1 == 0);
     assert(ll->size == 1);
+
     ll->addBack(s1);
+    // Expected: [0, 1]
     assert((*ll)[0].field_1 == 0);
     assert((*ll)[1].field_1 == 1);
     assert(ll->size == 2);
+
     ll->addFront(s3);
+    // Expected: [3, 0, 1]
     assert((*ll)[0].field_1 == 3);
     assert((*ll)[1].field_1 == 0);
     assert((*ll)[2].field_1 == 1);
     assert(ll->size == 3);
+
     ll->addBack(s4);
+    // Expected: [3, 0, 1, 4]
     assert((*ll)[0].field_1 == 3);
     assert((*ll)[1].field_1 == 0);
     assert((*ll)[2].field_1 == 1);
     assert((*ll)[3].field_1 == 4);
     assert(ll->size == 4);
+
+    // ---- Test removeFront() and removeBack() methods ----
     ll->removeFront();
+    // Expected: [0, 1, 4]
     assert((*ll)[0].field_1 == 0);
     assert((*ll)[1].field_1 == 1);
     assert((*ll)[2].field_1 == 4);
     assert(ll->size == 3);
+
+    ll->removeBack();
+    // Expected: [0, 1]
+    assert((*ll)[0].field_1 == 0);
+    assert((*ll)[1].field_1 == 1);
+    assert(ll->size == 2);
+
+    ll->removeBack();
+    // Expected: [0]
+    assert((*ll)[0].field_1 == 0);
+    assert(ll->size == 1);
+
+    ll->removeFront();
+    // Expected: empty list
+    assert(ll->size == 0);
+
+    // Removing from an empty list should return 1 (FAIL)
+    assert(ll->removeFront() == 1);
+    assert(ll->removeBack() == 1);
+
+    // ---- Test set() method ----
+    ll->addFront(s0);
+    ll->addFront(s1);
+    ll->addFront(s2);
+    // Expected: [2, 1, 0]
+    assert((*ll)[0].field_1 == 2);
+    assert((*ll)[1].field_1 == 1);
+    assert((*ll)[2].field_1 == 0);
+    assert(ll->size == 3);
+
+    ll->set(1, s4);
+    // Expected: [2, 4, 0]
+    assert((*ll)[0].field_1 == 2);
+    assert((*ll)[1].field_1 == 4);
+    assert((*ll)[2].field_1 == 0);
+    assert(ll->size == 3);
+
+    ll->set(2, s3);
+    // Expected: [2, 4, 3]
+    assert((*ll)[0].field_1 == 2);
+    assert((*ll)[1].field_1 == 4);
+    assert((*ll)[2].field_1 == 3);
+    assert(ll->size == 3);
+
+    // ---- Test find() method ----
+    assert(ll->find(4, compare1)->field_1 == 4);
+    assert(ll->find(2, compare1)->field_1 == 2);
+    assert(ll->find(3, compare1)->field_1 == 3);
+    assert(ll->find(0, compare1) == nullptr);
+    assert(ll->find(s2, compare2)->field_1 == s2.field_1);
+
+    // ---- Test findRemove() method ----
+    ll->findRemove(4, compare1);
+    // Expected: [2, 3]
+    assert((*ll)[0].field_1 == 2);
+    assert((*ll)[1].field_1 == 3);
+    assert(ll->size == 2);
+
+    ll->findRemove(2, compare1);
+    // Expected: [3]
+    assert((*ll)[0].field_1 == 3);
+    assert(ll->size == 1);
+
+    ll->findRemove(0, compare1);
+    // Expected (unchanged): [3]
+    assert((*ll)[0].field_1 == 3);
+    assert(ll->size == 1);
+
+    ll->findRemove(3, compare1);
+    // Expected: empty list
+    assert(ll->size == 0);
+
+    // ---- Test insertOrdered() method ----
+    ll->insertOrdered(s1, compare2);
+    // Expected: [1]
+    assert((*ll)[0].field_1 == 1);
+    assert(ll->size == 1);
+
+    ll->insertOrdered(s3, compare2);
+    // Expected: [1, 3]
+    assert((*ll)[0].field_1 == 1);
+    assert((*ll)[1].field_1 == 3);
+    assert(ll->size == 2);
+
+    ll->insertOrdered(s4, compare2);
+    // Expected: [1, 3, 4]
+    assert((*ll)[0].field_1 == 1);
+    assert((*ll)[1].field_1 == 3);
+    assert((*ll)[2].field_1 == 4);
+    assert(ll->size == 3);
+
+    ll->insertOrdered(s2, compare2);
+    // Expected: [1, 2, 3, 4]
+    assert((*ll)[0].field_1 == 1);
+    assert((*ll)[1].field_1 == 2);
+    assert((*ll)[2].field_1 == 3);
+    assert((*ll)[3].field_1 == 4);
+    assert(ll->size == 4);
+
+    ll->insertOrdered(s0, compare2);
+    // Expected: [0, 1, 2, 3, 4]
+    assert((*ll)[0].field_1 == 0);
+    assert((*ll)[1].field_1 == 1);
+    assert((*ll)[2].field_1 == 2);
+    assert((*ll)[3].field_1 == 3);
+    assert((*ll)[4].field_1 == 4);
+    assert(ll->size == 5);
+
+    // ---- Test toString() method ----
+    assert(ll->toString(toStringObj) == "[(0, a);(1, b);(2, c);(3, d);(4, e)]");
+
+    // ---- Test clear() method ----
+    ll->clear();
+    // Expected: empty list
+    assert(ll->size == 0);
+    assert(ll->toString(toStringObj) == "[]");
+    assert(ll->removeFront() == 1);
+    assert(ll->removeBack() == 1);
 
     delete ll;
 }
