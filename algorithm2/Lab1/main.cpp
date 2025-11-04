@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cassert>
 
 template <typename T>
 struct Linked_list {
@@ -219,100 +220,35 @@ std::string toStringObj(const Some_object& obj) {
 int main() {
     Linked_list <Some_object>* ll = new Linked_list <Some_object>();
 
-    Some_object s0;
-    s0.field_1 = 0;
-    s0.field_2 = 'a';
-    ll->addBack(s0);
-
-    Some_object s1;
-    s1.field_1 = 1;
-    s1.field_2 = 'a';
-    ll->addBack(s1);
-
-    Some_object s2;
-    s2.field_1 = 2;
-    s2.field_2 = 'a';
-    ll->addBack(s2);
-
-    Some_object s3;
-    s3.field_1 = 3;
-    s3.field_2 = 'a';
-    ll->addBack(s3);
-
-    Some_object s4;
-    s4.field_1 = 4;
-    s4.field_2 = 'a';
-
-    std::cout << ll->toString(toStringObj) << std::endl;
-    std::cout<<ll->removeFront()<<std::endl;
-    std::cout << ll->toString(toStringObj) << std::endl;
-    std::cout<<ll->removeFront()<<std::endl;
-    std::cout << ll->toString(toStringObj) << std::endl;
-    std::cout<<ll->removeFront()<<std::endl;
-    std::cout << ll->toString(toStringObj) << std::endl;
-    std::cout<<ll->removeFront()<<std::endl;
-    std::cout << ll->toString(toStringObj) << std::endl;
-    std::cout<<ll->removeFront()<<std::endl;
-    std::cout << ll->toString(toStringObj) << std::endl;
-    
-    ll->addBack(s0);
-    std::cout << ll->toString(toStringObj) << std::endl;
-    ll->addBack(s1);
-    std::cout << ll->toString(toStringObj) << std::endl;
-    ll->addFront(s3);
-    std::cout << ll->toString(toStringObj) << std::endl;
-    
-    std::cout<<ll->removeBack()<<std::endl;
-    std::cout << ll->toString(toStringObj) << std::endl;
-    std::cout<<ll->removeBack()<<std::endl;
-    std::cout << ll->toString(toStringObj) << std::endl;
-    std::cout<<ll->removeBack()<<std::endl;
-    std::cout << ll->toString(toStringObj) << std::endl;
-    std::cout<<ll->removeBack()<<std::endl;
-    std::cout << ll->toString(toStringObj) << std::endl;
-    std::cout<<ll->removeBack()<<std::endl;
-    std::cout << ll->toString(toStringObj) << std::endl;
+    Some_object s0 = { 0, 'a' };
+    Some_object s1 = { 1, 'b' };
+    Some_object s2 = { 2, 'c' };
+    Some_object s3 = { 3, 'd' };
+    Some_object s4 = { 4, 'e' };
 
     ll->addFront(s0);
-    std::cout << ll->toString(toStringObj) << std::endl;
-    ll->addFront(s1);
-    std::cout << ll->toString(toStringObj) << std::endl;
-    ll->addBack(s3);
-    std::cout << ll->toString(toStringObj) << std::endl;
-    ll->addFront(s2);
-    std::cout << ll->toString(toStringObj) << std::endl;
-
-    (*ll)[1] = s4;
-    std::cout << ll->toString(toStringObj) << std::endl;
-
-    std::cout << (*ll)[0].field_1 << std::endl;
-    std::cout << ll->at(1).field_1 << std::endl;
-    std::cout << (*ll)[2].field_1 << std::endl;
-    std::cout << ll->at(3).field_1 << std::endl;
-
-    std::cout << ll->find(4, compare1)->field_1 << std::endl;
-    std::cout << ll->find(2, compare1)->field_1 << std::endl;
-
-    std::cout << ll->toString(toStringObj) << std::endl;
-    ll->remove(4, compare1);
-    std::cout << ll->toString(toStringObj) << std::endl;
-    ll->remove(2, compare1);
-    std::cout << ll->toString(toStringObj) << std::endl;
-    ll->remove(3, compare1);
-    std::cout << ll->toString(toStringObj) << std::endl;
-    ll->remove(0, compare1);
-    std::cout << ll->toString(toStringObj) << std::endl;
-
-    ll->insertOrdered(s2, compare2);
-    ll->insertOrdered(s0, compare2);
-    ll->insertOrdered(s4, compare2);
-    ll->insertOrdered(s3, compare2);
-    ll->insertOrdered(s1, compare2);
-    //ll->insertOrdered(s0, compare2);
-    std::cout << ll->toString(toStringObj) << std::endl;
-
-    ll->clear();
-    std::cout << ll->toString(toStringObj) << std::endl;
+    assert((*ll)[0].field_1 == 0);
+    assert(ll->size == 1);
+    ll->addBack(s1);
+    assert((*ll)[0].field_1 == 0);
+    assert((*ll)[1].field_1 == 1);
+    assert(ll->size == 2);
+    ll->addFront(s3);
+    assert((*ll)[0].field_1 == 3);
+    assert((*ll)[1].field_1 == 0);
+    assert((*ll)[2].field_1 == 1);
+    assert(ll->size == 3);
+    ll->addBack(s4);
+    assert((*ll)[0].field_1 == 3);
+    assert((*ll)[1].field_1 == 0);
+    assert((*ll)[2].field_1 == 1);
+    assert((*ll)[3].field_1 == 4);
+    assert(ll->size == 4);
+    ll->removeFront();
+    assert((*ll)[0].field_1 == 0);
+    assert((*ll)[1].field_1 == 1);
+    assert((*ll)[2].field_1 == 4);
+    assert(ll->size == 3);
 
     delete ll;
 }
