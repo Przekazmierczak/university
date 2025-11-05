@@ -1,6 +1,10 @@
 #include <iostream>
 #include <string>
 #include <cassert>
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
+#include <time.h>
 
 template <typename T>
 struct Linked_list {
@@ -205,6 +209,10 @@ struct SomeObject {
     char field_2;
 };
 
+SomeObject createRandom() {
+    return { rand() % 10000, (char)('a' + rand() % 26) };
+};
+
 int compare1(const int& value, const SomeObject& obj) {
     if (value == obj.field_1) {
         return 0;
@@ -223,6 +231,7 @@ std::string toStringObj(const SomeObject& obj) {
 }
 
 int main() {
+    srand(time(0));
     Linked_list <SomeObject>* ll = new Linked_list <SomeObject>();
 
     SomeObject s0 = { 0, 'a' };
@@ -383,6 +392,31 @@ int main() {
     assert(ll->toString(toStringObj) == "[]");
     assert(ll->removeFront() == 1);
     assert(ll->removeBack() == 1);
+
+    std::cout<<toStringObj(createRandom())<<std::endl;
+
+    const int MAXORDER = 6;
+
+    for (int o = 1; o <= MAXORDER; o++) {
+        clock_t t1 = clock();
+        for (int i = 0; i < pow(10, o); i++) {
+            ll->addFront(createRandom());
+        }
+        clock_t t2 = clock();
+        std::cout << ll->size << std::endl;
+        double time = (t2 - t1) / (double)CLOCKS_PER_SEC;
+        std::cout << time << std::endl;
+
+        t1 = clock();
+        for (int i = 0; i < pow(10, o); i++) {
+            ll->set(rand() % ll->size, createRandom());
+        }
+        t2 = clock();
+        std::cout << ll->size << std::endl;
+        time = (t2 - t1) / (double)CLOCKS_PER_SEC;
+        std::cout << time << std::endl;
+        ll->clear();
+    }
 
     delete ll;
 }
