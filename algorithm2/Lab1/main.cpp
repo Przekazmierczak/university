@@ -1,11 +1,12 @@
 #include <iostream>
 #include <string>
-#include <cassert>
 #include <cstdlib>
+
+#include <cassert>
 #include <ctime>
 #include <cmath>
 #include <time.h>
-#include <map>
+#include <functional>
 
 template <typename T>
 struct Linked_list {
@@ -21,194 +22,312 @@ struct Linked_list {
         }
     };
 
-    Node* dummy;
     int size = 0;
 
-    Linked_list() {
-        dummy = new Node(T());
-        dummy->next = dummy;
-        dummy->prev = dummy;
-    }
+    Linked_list();
+    ~Linked_list();
 
-    ~Linked_list() {
-        clear();
-        delete dummy;
-    }
+    int addFront(T newNodeVal);
+    int addBack(T newNodeVal);
+    int removeFront();
+    int removeBack();
 
-    enum Status {
-        SUCCESS = 0,
-        FAIL = 1
-    };
-
-    int addFront(T newNodeVal) {
-        Node* newNode = createNewNode(newNodeVal);
-        if (newNode == nullptr) return FAIL;
-        addNodeFront(newNode, dummy);
-        return SUCCESS;
-    }
-
-    int addBack(T newNodeVal) {
-        Node* newNode = createNewNode(newNodeVal);
-        if (newNode == nullptr) return FAIL;
-        addNodeBack(newNode, dummy);
-        return SUCCESS;
-    }
-
-    int removeFront() {
-        return removeNode(dummy->next);
-    }
-
-    int removeBack() {
-        return removeNode(dummy->prev);
-    }
-
-    T& at(int index) const {
-        if (index >= size || index < 0) {
-            throw std::out_of_range("Index out of range");
-        }
-
-        if (index < size / 2) {
-            return getFromIndexFront(index);
-        }
-        return getFromIndexBack(size - index - 1);
-    }
-
-    void set(int index, T newValue) {
-        at(index) = newValue;
-    }
-
-    T& operator[](int index) {
-        return at(index);
-    }
+    T& at(int index) const;
+    void set(int index, T newValue);
+    T& operator[](int index);
 
     template <typename A>
-    T* find(A searched, int (*cmp)(const A&, const T&)) const {
-        Node* find = findNode(searched, cmp);
-        
-        if (find != nullptr) return &(find->val);
-
-        return nullptr;
-    }
+    T* find(A searched, int (*cmp)(const A&, const T&)) const;
 
     template <typename A>
-    int findRemove(A searched, int (*cmp)(const A&, const T&)) {
-        Node* node = findNode(searched, cmp);
+    int findRemove(A searched, int (*cmp)(const A&, const T&));
 
-        if (node != nullptr) {
-            removeNode(node);
-            return SUCCESS;
-        }
+    int insertOrdered(T newNodeVal, int (*cmp)(const T&, const T&));
+    void clear();
+    std::string toString(std::string (*toStringObj)(const T&)) const;
 
-        return FAIL;
-    }
+private:
+    Node* dummy;
+    enum Status { SUCCESS = 0, FAIL = 1 };
 
-    int insertOrdered(T newNodeVal, int (*cmp)(const T&, const T&)) {
-        Node* newNode = createNewNode(newNodeVal);
-        if (newNode == nullptr) return FAIL;
-
-        Node* curr = dummy->next;
-        while (curr != dummy && cmp(newNode->val, curr->val) > 0) {
-            curr = curr->next;
-        }
-        addNodeBack(newNode, curr);
-        return SUCCESS;
-    };
-
-    void clear() {
-        while (dummy->next != dummy) {
-            removeNode(dummy->next);
-        }
-    }
-
-    std::string toString(std::string (*toStringObj)(const T&)) const {
-        Node* curr = dummy->next;
-        bool first = true;
-
-        std::string str = "[";
-        while (curr != dummy) {
-            if (curr != dummy->next) str+= ";";
-            str += toStringObj(curr->val);
-            curr = curr->next;
-        }
-
-        str+= "]";
-
-        return str;
-    }
-
-    private:
-    Node* createNewNode(T newNodeVal) {
-        try {
-            return new Node(newNodeVal);
-        }
-        catch (const std::bad_alloc&) {
-            return nullptr;
-        }
-    }
-
-    void addNodeFront(Node* newNode, Node* node) {
-        newNode->next = node->next;
-        newNode->prev = node;
-        newNode->next->prev = newNode;
-        node->next = newNode;
-        size++;
-    }
-
-    void addNodeBack(Node* newNode, Node* node) {
-        newNode->prev = node->prev;
-        newNode->next = node;
-        newNode->prev->next = newNode;
-        node->prev = newNode;
-        size++;
-    }
-
-    int removeNode(Node* node) {
-        if (node != dummy) {
-            node->prev->next = node->next;
-            node->next->prev = node->prev;
-            delete node;
-            size--;
-            return SUCCESS;
-        }
-        return FAIL;
-    }
-
-    T& getFromIndexFront(int index) const {
-        Node* curr = dummy->next;
-        for (int i = 0; i < index; i++) {
-            curr = curr->next;
-        }
-        return curr->val;
-    }
-
-    T& getFromIndexBack(int index) const {
-        Node* curr = dummy->prev;
-        for (int i = 0; i < index; i++) {
-            curr = curr->prev;
-        }
-
-        return curr->val;
-    }
+    Node* createNewNode(T newNodeVal);
+    void addNodeFront(Node* newNode, Node* node);
+    void addNodeBack(Node* newNode, Node* node);
+    int removeNode(Node* node);
+    T& getFromIndexFront(int index) const;
+    T& getFromIndexBack(int index) const;
 
     template <typename A>
-    Node* findNode(A search, int (*cmp)(const A&, const T&)) const {
-        Node* curr = dummy->next;
-
-        while (curr != dummy) {
-            if (cmp(search, curr->val) == 0) {
-                return curr;
-            }
-            curr = curr->next;
-        }
-
-        return nullptr;
-    }
+    Node* findNode(A search, int (*cmp)(const A&, const T&)) const;
 };
 
 struct SomeObject {
     int field_1;
     char field_2;
 };
+
+SomeObject createRandom();
+
+int compare1(const int& value, const SomeObject& obj);
+int compare2(const SomeObject& new_obj, const SomeObject& list_obj);
+std::string toStringObj(const SomeObject& obj);
+
+std::string printColumn(std::string value, int width);
+void fillList(int elements, Linked_list <SomeObject>* ll);
+
+template <typename Func>
+std::string measureMethod(Func func, Linked_list <SomeObject>* ll, int elements, bool requiresFill, int width, bool multiRun);
+
+void assertTests(Linked_list <SomeObject>* ll);
+
+int main() {
+    srand(time(0));
+    Linked_list <SomeObject>* ll = new Linked_list <SomeObject>();
+
+    // Small correctness check
+    assertTests(ll);
+
+    int maxOrder = 6;
+    // Minimum width: 12
+    int columnWidth = 12;
+
+    struct TestArguments {
+        bool enabled;
+        std::string name;
+        std::function<void()> body;
+        bool requiresFill;
+        bool multiRun;
+    };
+
+    // Change first value (enabled) to reduce number of tests
+    TestArguments testMethods[11] = {
+        {true, "addFront", [ll]() { ll->addFront(createRandom()); }, false, true},
+        {true, "addBack",  [ll]() { ll->addBack(createRandom()); }, false, true},
+        {true, "removeFront", [ll]() { ll->removeFront(); }, true, true},
+        {true, "removeBack", [ll]() { ll->removeBack(); }, false, true},
+        {true, "at", [ll]() { ll->at(rand() % ll->size); }, true, true},
+        {true, "set", [ll]() { ll->set(rand() % ll->size, createRandom()); }, true, true},
+        {true, "find", [ll]() { ll->find(rand() % 1000000, compare1); }, true, true},
+        {true, "findRemove", [ll]() { ll->findRemove(rand() % 1000000, compare1); }, true, true},
+        {true, "insertOrd.", [ll]() { ll->insertOrdered(createRandom(), compare2); }, true, true},
+        {true, "toString", [ll]() { ll->toString(toStringObj); }, true, false},
+        {true, "clear", [ll]() { ll->clear(); }, true, false}
+    };
+
+    std::cout << "|" << printColumn("elements", columnWidth);
+    for (const TestArguments& testMethod : testMethods) {
+        if (testMethod.enabled) std::cout << printColumn(testMethod.name, columnWidth);
+    }
+    std::cout << std::endl;
+
+    // performance tests
+    for (int o = 1; o <= maxOrder; o++) {
+        int elements = pow(10, o);
+        std::cout << "|" << printColumn(std::to_string(elements), columnWidth);
+        for (const TestArguments& testMethod : testMethods) {
+            if (testMethod.enabled) {
+                std::cout << measureMethod(testMethod.body, ll, elements, testMethod.requiresFill, columnWidth, testMethod.multiRun);
+            }
+        }
+        std::cout << std::endl;
+    }
+
+    delete ll;
+}
+
+template <typename T>
+Linked_list<T>::Linked_list() {
+    dummy = new Node(T());
+    dummy->next = dummy;
+    dummy->prev = dummy;
+}
+
+template <typename T>
+Linked_list<T>::~Linked_list() {
+    clear();
+    delete dummy;
+}
+
+template <typename T>
+int Linked_list<T>::addFront(T newNodeVal) {
+    Node* newNode = createNewNode(newNodeVal);
+    if (newNode == nullptr) return FAIL;
+    addNodeFront(newNode, dummy);
+    return SUCCESS;
+}
+
+template <typename T>
+int Linked_list<T>::addBack(T newNodeVal) {
+    Node* newNode = createNewNode(newNodeVal);
+    if (newNode == nullptr) return FAIL;
+    addNodeBack(newNode, dummy);
+    return SUCCESS;
+}
+
+template <typename T>
+int Linked_list<T>::removeFront() {
+    return removeNode(dummy->next);
+}
+
+template <typename T>
+int Linked_list<T>::removeBack() {
+    return removeNode(dummy->prev);
+}
+
+template <typename T>
+T& Linked_list<T>::at(int index) const {
+    if (index >= size || index < 0) {
+        throw std::out_of_range("Index out of range");
+    }
+
+    if (index < size / 2) {
+        return getFromIndexFront(index);
+    }
+    return getFromIndexBack(size - index - 1);
+}
+
+template <typename T>
+void Linked_list<T>::set(int index, T newValue) {
+    at(index) = newValue;
+}
+
+template <typename T>
+T& Linked_list<T>::operator[](int index) {
+    return at(index);
+}
+
+template <typename T>
+template <typename A>
+T* Linked_list<T>::find(A searched, int (*cmp)(const A&, const T&)) const {
+    Node* find = findNode(searched, cmp);
+    
+    if (find != nullptr) return &(find->val);
+
+    return nullptr;
+}
+
+template <typename T>
+template <typename A>
+int Linked_list<T>::findRemove(A searched, int (*cmp)(const A&, const T&)) {
+    Node* node = findNode(searched, cmp);
+
+    if (node != nullptr) {
+        removeNode(node);
+        return SUCCESS;
+    }
+
+    return FAIL;
+}
+
+template <typename T>
+int Linked_list<T>::insertOrdered(T newNodeVal, int (*cmp)(const T&, const T&)) {
+    Node* newNode = createNewNode(newNodeVal);
+    if (newNode == nullptr) return FAIL;
+
+    Node* curr = dummy->next;
+    while (curr != dummy && cmp(newNode->val, curr->val) > 0) {
+        curr = curr->next;
+    }
+    addNodeBack(newNode, curr);
+    return SUCCESS;
+}
+
+template <typename T>
+void Linked_list<T>::clear() {
+    while (dummy->next != dummy) {
+        removeNode(dummy->next);
+    }
+}
+
+template <typename T>
+std::string Linked_list<T>::toString(std::string (*toStringObj)(const T&)) const {
+    Node* curr = dummy->next;
+
+    std::string str = "[";
+    while (curr != dummy) {
+        if (curr != dummy->next) str+= ";";
+        str += toStringObj(curr->val);
+        curr = curr->next;
+    }
+
+    str+= "]";
+
+    return str;
+}
+
+template <typename T>
+typename Linked_list<T>::Node* Linked_list<T>::createNewNode(T newNodeVal) {
+    try {
+        return new Node(newNodeVal);
+    }
+    catch (const std::bad_alloc&) {
+        return nullptr;
+    }
+}
+
+template <typename T>
+void Linked_list<T>::addNodeFront(Linked_list<T>::Node* newNode, Linked_list<T>::Node* node) {
+    newNode->next = node->next;
+    newNode->prev = node;
+    newNode->next->prev = newNode;
+    node->next = newNode;
+    size++;
+}
+
+template <typename T>
+void Linked_list<T>::addNodeBack(Linked_list<T>::Node* newNode, Linked_list<T>::Node* node) {
+    newNode->prev = node->prev;
+    newNode->next = node;
+    newNode->prev->next = newNode;
+    node->prev = newNode;
+    size++;
+}
+
+template <typename T>
+int Linked_list<T>::removeNode(Linked_list<T>::Node* node) {
+    if (node != dummy) {
+        node->prev->next = node->next;
+        node->next->prev = node->prev;
+        delete node;
+        size--;
+        return SUCCESS;
+    }
+    return FAIL;
+}
+
+template <typename T>
+T& Linked_list<T>::getFromIndexFront(int index) const {
+    Node* curr = dummy->next;
+    for (int i = 0; i < index; i++) {
+        curr = curr->next;
+    }
+    return curr->val;
+}
+
+template <typename T>
+T& Linked_list<T>::getFromIndexBack(int index) const {
+    Node* curr = dummy->prev;
+    for (int i = 0; i < index; i++) {
+        curr = curr->prev;
+    }
+
+    return curr->val;
+}
+
+template <typename T>
+template <typename A>
+typename Linked_list<T>::Node* Linked_list<T>::findNode(A search, int (*cmp)(const A&, const T&)) const {
+    Node* curr = dummy->next;
+
+    while (curr != dummy) {
+        if (cmp(search, curr->val) == 0) {
+            return curr;
+        }
+        curr = curr->next;
+    }
+
+    return nullptr;
+}
 
 SomeObject createRandom() {
     return { rand() % 1000000, (char)('a' + rand() % 26) };
@@ -245,10 +364,14 @@ void fillList(int elements, Linked_list <SomeObject>* ll) {
 }
 
 template <typename Func>
-std::string measureMethodMulti(Func func, Linked_list <SomeObject>* ll, int elements, bool needFill, int width) {
-    if (needFill) fillList(elements, ll);
+std::string measureMethod(Func func, Linked_list <SomeObject>* ll, int elements, bool requiresFill, int width, bool multiRun) {
+    if (requiresFill) fillList(elements, ll);
     clock_t t1 = clock();
-    for (int i = 0; i < elements; i++) {
+    if (multiRun) {
+        for (int i = 0; i < elements; i++) {
+            func();
+        }
+    } else {
         func();
     }
     clock_t t2 = clock();
@@ -259,25 +382,7 @@ std::string measureMethodMulti(Func func, Linked_list <SomeObject>* ll, int elem
     return printColumn(strTime, width);
 }
 
-template <typename Func>
-std::string measureMethodOnce(Func func, Linked_list <SomeObject>* ll, int elements, bool needFill, int width) {
-    if (needFill) fillList(elements, ll);
-    clock_t t1 = clock();
-    func();
-    clock_t t2 = clock();
-    ll->clear();
-    double currTime = (t2 - t1) / (double)CLOCKS_PER_SEC;
-    std:: string strTime = std::to_string(currTime);
-    strTime.erase(strTime.size() - 3);
-    return printColumn(strTime, width);
-}
-
-
-
-int main() {
-    srand(time(0));
-    Linked_list <SomeObject>* ll = new Linked_list <SomeObject>();
-
+void assertTests(Linked_list <SomeObject>* ll) {
     SomeObject s0 = { 0, 'a' };
     SomeObject s1 = { 1, 'b' };
     SomeObject s2 = { 2, 'c' };
@@ -436,84 +541,4 @@ int main() {
     assert(ll->toString(toStringObj) == "[]");
     assert(ll->removeFront() == 1);
     assert(ll->removeBack() == 1);
-
-    const int MAXORDER = 9;
-   
-    std::map<std::string, bool> methods = {
-        {"addFront", false},
-        {"removeFront", false},
-        {"addBack", false},
-        {"at", false},
-        {"set", false},
-        {"find", false},
-        {"findRemove", false},
-        {"removeBack", false},
-        {"insertOrd.", false},
-        {"toString", false},
-        {"clear", true},
-    };
-
-    int width = 12;
-    int namesSize = 1;
-
-    std::cout << "|" << printColumn("elements", width);
-    for (const auto& [method, condition] : methods) {
-        if (condition) std::cout << printColumn(method, width);
-    }
-    std::cout << std::endl;
-
-    for (int o = 1; o <= MAXORDER; o++) {
-        int elements = pow(10, o);
-        std::cout << "|";
-
-        std::cout << printColumn(std::to_string(elements), width);
-        // ---- Measuring execution time of addFront() method ----
-        if (methods["addFront"]) {
-            std::cout << measureMethodMulti([&]() { ll->addFront(createRandom()); }, ll, elements, false, width);
-        }
-        // ---- Measuring execution time of removeFront() method ----
-        if (methods["removeFront"]) {
-            std::cout << measureMethodMulti([&]() { ll->removeFront(); }, ll, elements, true, width);
-        }
-        // ---- Measuring execution time of addBack() method ----
-        if (methods["addBack"]) {
-            std::cout << measureMethodMulti([&]() { ll->addBack(createRandom()); }, ll, elements, false, width);
-        }
-        // ---- Measuring execution time of at() method ----
-        if (methods["at"]) {
-            std::cout << measureMethodMulti([&]() { ll->at(rand() % ll->size); }, ll, elements, true, width);
-        }
-        // ---- Measuring execution time of set() method ----
-        if (methods["set"]) {
-            std::cout << measureMethodMulti([&]() { ll->set(rand() % ll->size, createRandom()); }, ll, elements, true, width);
-        }
-        // ---- Measuring execution time of find() method ----
-        if (methods["find"]) {
-            std::cout << measureMethodMulti([&]() { ll->find(rand() % 1000000, compare1); }, ll, elements, true, width);
-        }
-        // ---- Measuring execution time of findRemove() method ----
-        if (methods["findRemove"]) {
-            std::cout << measureMethodMulti([&]() { ll->findRemove(rand() % 1000000, compare1); }, ll, elements, true, width);
-        }
-        // ---- Measuring execution time of removeBack() method ----
-        if (methods["removeBack"]) {
-            std::cout << measureMethodMulti([&]() { ll->removeBack(); }, ll, elements, true, width);
-        }
-        // ---- Measuring execution time of insertOrdered() method ----
-        if (methods["insertOrd."]) {
-            std::cout << measureMethodMulti([&]() { ll->insertOrdered(createRandom(), compare2); }, ll, elements, false, width);
-        }
-        // ---- Measuring execution time of toString() method ----
-        if (methods["toString"]) {
-            std::cout << measureMethodOnce([&]() { ll->toString(toStringObj); }, ll, elements, true, width);
-        }
-        // ---- Measuring execution time of clear() method ----
-        if (methods["clear"]) {
-            std::cout << measureMethodOnce([&]() { ll->clear(); }, ll, elements, true, width);
-        }
-
-        std::cout << std::endl;
-    }
-
-    delete ll;
 }
