@@ -5,7 +5,7 @@
 #include <ctime>
 #include <cmath>
 #include <time.h>
-#include <format>
+#include <map>
 
 template <typename T>
 struct Linked_list {
@@ -238,13 +238,21 @@ std::string printColumn(std::string value, int width) {
     return value;
 }
 
+void fillList(int elements, Linked_list <SomeObject>* ll) {
+    for (int i = 0; i < elements; i++) {
+        ll->addFront(createRandom());
+    }
+}
+
 template <typename Func>
-std::string measureMethodMulti(Func func, int elements, int width) {
+std::string measureMethodMulti(Func func, Linked_list <SomeObject>* ll, int elements, bool needFill, int width) {
+    if (needFill) fillList(elements, ll);
     clock_t t1 = clock();
     for (int i = 0; i < elements; i++) {
         func();
     }
     clock_t t2 = clock();
+    ll->clear();
     double currTime = (t2 - t1) / (double)CLOCKS_PER_SEC;
     std:: string strTime = std::to_string(currTime);
     strTime.erase(strTime.size() - 3);
@@ -252,15 +260,19 @@ std::string measureMethodMulti(Func func, int elements, int width) {
 }
 
 template <typename Func>
-std::string measureMethodOnce(Func func, int width) {
+std::string measureMethodOnce(Func func, Linked_list <SomeObject>* ll, int elements, bool needFill, int width) {
+    if (needFill) fillList(elements, ll);
     clock_t t1 = clock();
     func();
     clock_t t2 = clock();
+    ll->clear();
     double currTime = (t2 - t1) / (double)CLOCKS_PER_SEC;
     std:: string strTime = std::to_string(currTime);
     strTime.erase(strTime.size() - 3);
     return printColumn(strTime, width);
 }
+
+
 
 int main() {
     srand(time(0));
@@ -425,65 +437,80 @@ int main() {
     assert(ll->removeFront() == 1);
     assert(ll->removeBack() == 1);
 
-    const int MAXORDER = 6;
-    // 0: addFront(), 1: addBack(), 2: removeFront(), 3: removeBack(), 4: at(), 5: set(),
-    // 6: find(), 7: findRemove(), 8: insertOrdered(), 9: clear(), 10: toString()
-    bool ifAddFront = true;
-    bool removeFront = true;
-    bool addBack = true;
-    bool at = true;
-    bool set = true;
-    bool find = true;
-    bool findRemove = true;
-    bool removeBack = true;
-    bool insertOrdered = true;
-    bool toString = true;
-    bool clear = true;
+    const int MAXORDER = 9;
+   
+    std::map<std::string, bool> methods = {
+        {"addFront", false},
+        {"removeFront", false},
+        {"addBack", false},
+        {"at", false},
+        {"set", false},
+        {"find", false},
+        {"findRemove", false},
+        {"removeBack", false},
+        {"insertOrd.", false},
+        {"toString", false},
+        {"clear", true},
+    };
 
     int width = 12;
-    std::string names[12] = {"elements", "addFront", "removeFront", "addBack", "at", "set", "find", "findRemove", "removeBack", "insertOrd.", "toString", "clear"};
-    std::cout << "|";
-    for (auto name : names) {
-        std::cout << printColumn(name, width);
+    int namesSize = 1;
+
+    std::cout << "|" << printColumn("elements", width);
+    for (const auto& [method, condition] : methods) {
+        if (condition) std::cout << printColumn(method, width);
     }
     std::cout << std::endl;
+
     for (int o = 1; o <= MAXORDER; o++) {
         int elements = pow(10, o);
         std::cout << "|";
 
         std::cout << printColumn(std::to_string(elements), width);
         // ---- Measuring execution time of addFront() method ----
-        std::cout << measureMethodMulti([&]() { ll->addFront(createRandom()); }, elements, width);
-
+        if (methods["addFront"]) {
+            std::cout << measureMethodMulti([&]() { ll->addFront(createRandom()); }, ll, elements, false, width);
+        }
         // ---- Measuring execution time of removeFront() method ----
-        std::cout << measureMethodMulti([&]() { ll->removeFront(); }, elements, width);
-
+        if (methods["removeFront"]) {
+            std::cout << measureMethodMulti([&]() { ll->removeFront(); }, ll, elements, true, width);
+        }
         // ---- Measuring execution time of addBack() method ----
-        std::cout << measureMethodMulti([&]() { ll->addBack(createRandom()); }, elements, width);
-
+        if (methods["addBack"]) {
+            std::cout << measureMethodMulti([&]() { ll->addBack(createRandom()); }, ll, elements, false, width);
+        }
         // ---- Measuring execution time of at() method ----
-        std::cout << measureMethodMulti([&]() { ll->at(rand() % ll->size); }, elements, width);
-
+        if (methods["at"]) {
+            std::cout << measureMethodMulti([&]() { ll->at(rand() % ll->size); }, ll, elements, true, width);
+        }
         // ---- Measuring execution time of set() method ----
-        std::cout << measureMethodMulti([&]() { ll->set(rand() % ll->size, createRandom()); }, elements, width);
-
+        if (methods["set"]) {
+            std::cout << measureMethodMulti([&]() { ll->set(rand() % ll->size, createRandom()); }, ll, elements, true, width);
+        }
         // ---- Measuring execution time of find() method ----
-        std::cout << measureMethodMulti([&]() { ll->find(rand() % 1000000, compare1); }, elements, width);
-
+        if (methods["find"]) {
+            std::cout << measureMethodMulti([&]() { ll->find(rand() % 1000000, compare1); }, ll, elements, true, width);
+        }
         // ---- Measuring execution time of findRemove() method ----
-        std::cout << measureMethodMulti([&]() { ll->findRemove(rand() % 1000000, compare1); }, elements, width);
-
+        if (methods["findRemove"]) {
+            std::cout << measureMethodMulti([&]() { ll->findRemove(rand() % 1000000, compare1); }, ll, elements, true, width);
+        }
         // ---- Measuring execution time of removeBack() method ----
-        std::cout << measureMethodMulti([&]() { ll->removeBack(); }, elements, width);
-
+        if (methods["removeBack"]) {
+            std::cout << measureMethodMulti([&]() { ll->removeBack(); }, ll, elements, true, width);
+        }
         // ---- Measuring execution time of insertOrdered() method ----
-        std::cout << measureMethodMulti([&]() { ll->insertOrdered(createRandom(), compare2); }, elements, width);
-
+        if (methods["insertOrd."]) {
+            std::cout << measureMethodMulti([&]() { ll->insertOrdered(createRandom(), compare2); }, ll, elements, false, width);
+        }
         // ---- Measuring execution time of toString() method ----
-        std::cout << measureMethodOnce([&]() { ll->toString(toStringObj); }, width);
-
+        if (methods["toString"]) {
+            std::cout << measureMethodOnce([&]() { ll->toString(toStringObj); }, ll, elements, true, width);
+        }
         // ---- Measuring execution time of clear() method ----
-        std::cout << measureMethodOnce([&]() { ll->clear(); }, width);
+        if (methods["clear"]) {
+            std::cout << measureMethodOnce([&]() { ll->clear(); }, ll, elements, true, width);
+        }
 
         std::cout << std::endl;
     }
