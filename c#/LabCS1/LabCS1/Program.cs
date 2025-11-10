@@ -8,12 +8,19 @@ namespace LabCS1
         static void Main(string[] args)
         {
             string tableName = "Company";
-            string html = "<html>\n<style>\ntable, th, td {\nborder: 1px solid black;\n}\n</style>\n<body>\n\n<h2>"
-                + tableName +
-                "</h2>\n<table style=\"width: 100%\">\n<tr>";
+            string html = "<html>\n";
+            html += "<style>\n";
+            html += "table, th, td {\n";
+            html += "border: 1px solid black;\n";
+            html += "}\n";
+            html += "</style>\n";
+            html += "<body>\n";
+            html += "<h2>" + tableName + "</h2>\n";
+            html += "<table style=\"width: 100%\">\n";
+
+            html += "<tr>";
 
             var lines = File.ReadAllLines("C:\\Users\\kp15319\\Desktop\\uk.csv");
-
             var headerCols = lines[0].Split(",");
             foreach (var header in headerCols)
             {
@@ -33,7 +40,9 @@ namespace LabCS1
                 html += "</tr>\n";
             }
 
-            html += "</table>\n</body>\n</html>";
+            html += "</table>\n";
+            html += "</body>\n";
+            html += "</html>";
 
             File.WriteAllText("C:\\Users\\kp15319\\Desktop\\test.html", html);
         }

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LabCS2": {
+      "commandName": "Project",
+      "commandLineArgs": "I:\\university\\c#\\LabCS2\\LabCS2\\uk.csv"
+    }
+  }
+}
