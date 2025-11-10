@@ -126,7 +126,11 @@ int main() {
         std::cout << "|" << printColumn(std::to_string(elements), columnWidth);
         for (const TestArguments& testMethod : testMethods) {
             if (testMethod.enabled) {
-                std::cout << measureMethod(testMethod.body, ll, elements, testMethod.requiresFill, columnWidth, testMethod.multiRun);
+                std::cout <<
+                measureMethod(testMethod.body, ll, elements,
+                              testMethod.requiresFill, columnWidth,
+                              testMethod.multiRun)
+                << std::flush;
             }
         }
         std::cout << std::endl;
