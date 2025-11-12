@@ -10,70 +10,80 @@
 
 template <typename T>
 struct Dynamic_array {
-    T** array;
+    T* array;
 
-    Dynamic_array() : ratio(2), currSize(0), maxSize(1) {
-        array = new T*[maxSize];
-    };
+    Dynamic_array() : ratio(2), currSize(0), maxSize(1) { array = new T[maxSize]; }
+    ~Dynamic_array() { delete[] array; }
 
-    ~Dynamic_array() {
-        delete[] array;
-    };
+    int size() { return currSize; }
+    int checkMaxSize() { return maxSize; }
 
-    int ratio;
-    int currSize;
-    int maxSize;
-
-    int add(T &value) {
+    int add(T value) {
         if (currSize == maxSize) {
-            if (resize() == FAIL) return FAIL;
+            if (resize(maxSize * ratio, false) == FAIL) return FAIL;
         }
-        array[currSize] = &value;
+        array[currSize] = value;
         currSize++;
         return SUCCESS;
     }
 
-    T* at(int index) {
+    T at(int index) {
         checkOutOfRange(index);
         return array[index];
     }
 
-    T* operator[](int index) {
+    T operator[](int index) {
         return at(index);
     }
 
-    int set(int index, T &newValue) {
+    int set(int index, T newValue) {
         checkOutOfRange(index);
-        array[index] = &newValue;
+        array[index] = newValue;
         return SUCCESS;
     }
 
     int clear() {
-        delete[] array;
-        if (getMemory(array, 1) == FAIL) return FAIL;
-        currSize = 0;
-        maxSize = 1;
-        return SUCCESS;
+        return resize(1, true);
     }
 
     std::string toString(std::string (*toStringObj)(const T&)) const {
         std::string str = "[";
         for (int i = 0; i < currSize; i++) {
             if (i != 0) str+= ";";
-            str += toStringObj(*array[i]);
+            str += toStringObj(array[i]);
         }
         str+= "]";
 
         return str;
     }
 
-private:
+    void sort(int (*cmp)(const T&, const T&)) {
+        if (currSize == 0 || currSize == 1) return;
+
+        bool ifSwapped = true;
+        while (ifSwapped) {
+            ifSwapped = false;
+            for (int i = 0; i < currSize - 1; i++) {
+                if (cmp(array[i], array[i + 1]) > 0) {
+                    swap(i, i + 1);
+                    ifSwapped = true;
+                }
+            }
+        }
+    }
+
+private:    
+    int ratio;
+    int currSize;
+    int maxSize;
     enum Status { SUCCESS = 0, FAIL = 1 };
 
-    int resize() {
-        maxSize *= ratio;
-        T** newArray;
-        if (getMemory(newArray, maxSize) == FAIL) return FAIL;
+    int resize(int newSize, bool resetCurrSize) {
+        T* newArray;
+        if (getMemory(newArray, newSize) == FAIL) return FAIL;
+
+        currSize = (resetCurrSize) ? 0 : currSize;
+        maxSize = newSize;
 
         for (int i = 0; i < currSize; i++) {
             newArray[i] = array[i];
@@ -90,13 +100,19 @@ private:
         }
     }
 
-    int getMemory(T** &array, int elements) {
+    int getMemory(T* &array, int elements) {
         try {
-            array = new T*[elements];
+            array = new T[elements];
         } catch (const std::bad_alloc&) {
             return FAIL;
         }
         return SUCCESS;
+    }
+
+    void swap(int index1, int index2) {
+        T temp = array[index1];
+        array[index1] = array[index2];
+        array[index2] = temp;
     }
 };
 
@@ -107,10 +123,11 @@ struct SomeObject {
 
 SomeObject createRandom();
 
+int compare(const SomeObject& new_obj, const SomeObject& list_obj);
 std::string toStringObj(const SomeObject& obj);
 
 std::string printColumn(std::string value, int width);
-void fillList(int elements, Dynamic_array <SomeObject>* ll);
+void fillArray(int elements, Dynamic_array <SomeObject>* ll);
 
 template <typename Func>
 std::string measureMethod(Func func, Dynamic_array <SomeObject>* ll, int elements, bool requiresFill, int width, bool multiRun);
@@ -127,83 +144,12 @@ int main() {
     SomeObject s3 = { 3, 'd' };
     SomeObject s4 = { 4, 'e' };
 
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s0);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s1);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s2);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s3);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s4);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-
-    std::cout << (*da)[0]->field_1 << std::endl;
-    std::cout << (*da)[1]->field_1 << std::endl;
-    std::cout << (*da)[2]->field_1 << std::endl;
-    std::cout << da->toString(toStringObj) << std::endl;
-    
-    da->set(0, s4);
-    
-    std::cout << (*da)[0]->field_1 << std::endl;
-    std::cout << da->toString(toStringObj) << std::endl;
-    
-    da->clear();
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    std::cout << da->toString(toStringObj) << std::endl;
-
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s0);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s1);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s2);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s3);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s4);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s0);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s1);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s2);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s3);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s4);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s0);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s1);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s2);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s3);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s4);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s0);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s1);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s2);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s3);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-    da->add(s4);
-    std::cout << da->currSize << "/" << da->maxSize << std::endl;
-
-    std::cout << da->toString(toStringObj) << std::endl;
-
-
     // Small correctness check
-    // assertTests(da);
+    assertTests(da);
 
+    // Maximum order: 9 (int overflow)
     int maxOrder = 6;
-    // Minimum width: 12
-    int columnWidth = 12;
+    int columnWidth = 11;
 
     struct TestArguments {
         bool enabled;
@@ -213,44 +159,37 @@ int main() {
         bool multiRun;
     };
 
-
-
     // Change first value (enabled) to reduce number of tests
-    // TestArguments testMethods[11] = {
-    //     {true, "addFront", [ll]() { ll->addFront(createRandom()); }, false, true},
-    //     {true, "addBack",  [ll]() { ll->addBack(createRandom()); }, false, true},
-    //     {true, "removeFront", [ll]() { ll->removeFront(); }, true, true},
-    //     {true, "removeBack", [ll]() { ll->removeBack(); }, false, true},
-    //     {true, "at", [ll]() { ll->at(rand() % ll->size); }, true, true},
-    //     {true, "set", [ll]() { ll->set(rand() % ll->size, createRandom()); }, true, true},
-    //     {true, "find", [ll]() { ll->find(rand() % 1000000, compare1); }, true, true},
-    //     {true, "findRemove", [ll]() { ll->findRemove(rand() % 1000000, compare1); }, true, true},
-    //     {true, "insertOrd.", [ll]() { ll->insertOrdered(createRandom(), compare2); }, true, true},
-    //     {true, "toString", [ll]() { ll->toString(toStringObj); }, true, false},
-    //     {true, "clear", [ll]() { ll->clear(); }, true, false}
-    // };
+    TestArguments testMethods[6] = {
+        {true, "add", [da]() { da->add(createRandom()); }, false, true},
+        {true, "at",  [da]() { da->at(rand() % da->size()); }, true, true},
+        {true, "set", [da]() { da->set(rand() % da->size(), createRandom()); }, true, true},
+        {true, "clear", [da]() { da->clear(); }, true, false},
+        {true, "toString", [da]() { da->toString(toStringObj); }, true, false},
+        {true, "sort", [da]() { da->sort(compare); }, true, false}
+    };
 
-    // std::cout << "|" << printColumn("elements", columnWidth);
-    // for (const TestArguments& testMethod : testMethods) {
-    //     if (testMethod.enabled) std::cout << printColumn(testMethod.name, columnWidth);
-    // }
-    // std::cout << std::endl;
+    std::cout << "|" << printColumn("elements", columnWidth);
+    for (const TestArguments& testMethod : testMethods) {
+        if (testMethod.enabled) std::cout << printColumn(testMethod.name, columnWidth);
+    }
+    std::cout << std::endl;
 
-    // // performance tests
-    // for (int o = 1; o <= maxOrder; o++) {
-    //     int elements = pow(10, o);
-    //     std::cout << "|" << printColumn(std::to_string(elements), columnWidth);
-    //     for (const TestArguments& testMethod : testMethods) {
-    //         if (testMethod.enabled) {
-    //             std::cout <<
-    //             measureMethod(testMethod.body, ll, elements,
-    //                           testMethod.requiresFill, columnWidth,
-    //                           testMethod.multiRun)
-    //             << std::flush;
-    //         }
-    //     }
-    //     std::cout << std::endl;
-    // }
+    // performance tests
+    for (int o = 1; o <= maxOrder; o++) {
+        int elements = pow(10, o);
+        std::cout << "|" << printColumn(std::to_string(elements), columnWidth);
+        for (const TestArguments& testMethod : testMethods) {
+            if (testMethod.enabled) {
+                std::cout <<
+                measureMethod(testMethod.body, da, elements,
+                              testMethod.requiresFill, columnWidth,
+                              testMethod.multiRun)
+                << std::flush;
+            }
+        }
+        std::cout << std::endl;
+    }
 
     delete da;
 }
@@ -259,14 +198,7 @@ SomeObject createRandom() {
     return { rand() % 1000000, (char)('a' + rand() % 26) };
 };
 
-int compare1(const int& value, const SomeObject& obj) {
-    if (value == obj.field_1) {
-        return 0;
-    }
-    return 1;
-}
-
-int compare2(const SomeObject& new_obj, const SomeObject& list_obj) {
+int compare(const SomeObject& new_obj, const SomeObject& list_obj) {
     if (new_obj.field_1 > list_obj.field_1) return 1;
     if (new_obj.field_1 < list_obj.field_1) return -1;
     return 0;
@@ -283,12 +215,15 @@ std::string printColumn(std::string value, int width) {
     return value;
 }
 
-void fillList(int elements, Dynamic_array <SomeObject>* ll) {
+void fillArray(int elements, Dynamic_array <SomeObject>* da) {
+    for (int i = 0; i < elements; i++) {
+        da->add(createRandom());
+    }
 }
 
 template <typename Func>
-std::string measureMethod(Func func, Dynamic_array <SomeObject>* ll, int elements, bool requiresFill, int width, bool multiRun) {
-    if (requiresFill) fillList(elements, ll);
+std::string measureMethod(Func func, Dynamic_array <SomeObject>* da, int elements, bool requiresFill, int width, bool multiRun) {
+    if (requiresFill) fillArray(elements, da);
     clock_t t1 = clock();
     if (multiRun) {
         for (int i = 0; i < elements; i++) {
@@ -298,17 +233,118 @@ std::string measureMethod(Func func, Dynamic_array <SomeObject>* ll, int element
         func();
     }
     clock_t t2 = clock();
-    ll->clear();
+    da->clear();
     double currTime = (t2 - t1) / (double)CLOCKS_PER_SEC;
     std:: string strTime = std::to_string(currTime);
     strTime.erase(strTime.size() - 3);
     return printColumn(strTime, width);
 }
 
-void assertTests(Dynamic_array <SomeObject>* ll) {
+void assertTests(Dynamic_array <SomeObject>* da) {
     SomeObject s0 = { 0, 'a' };
     SomeObject s1 = { 1, 'b' };
     SomeObject s2 = { 2, 'c' };
     SomeObject s3 = { 3, 'd' };
     SomeObject s4 = { 4, 'e' };
+
+    auto outOfRangeTest = [&da](int index) {
+        bool outOfRange = false;
+        try {
+            (*da)[index];
+        } catch (std::out_of_range&) {
+            outOfRange = true;
+        }
+        assert(outOfRange == true);
+    };
+
+    // ---- Test add() methods ----
+    da->add(s0);
+    // Expected: [0]
+    assert((*da)[0].field_1 == 0);
+    assert(da->size() == 1);
+    assert(da->checkMaxSize() == 1);
+    outOfRangeTest(1);
+
+    da->add(s2);
+    // Expected: [0, 2]
+    assert((*da)[0].field_1 == 0);
+    assert((*da)[1].field_1 == 2);
+    assert(da->size() == 2);
+    assert(da->checkMaxSize() == 2);
+    outOfRangeTest(2);
+
+    da->add(s1);
+    // Expected: [0, 2, 1]
+    assert((*da)[0].field_1 == 0);
+    assert((*da)[1].field_1 == 2);
+    assert((*da)[2].field_1 == 1);
+    assert(da->size() == 3);
+    assert(da->checkMaxSize() == 4);
+    outOfRangeTest(3);
+
+    da->add(s4);
+    // Expected: [0, 2, 1, 4]
+    assert((*da)[0].field_1 == 0);
+    assert((*da)[1].field_1 == 2);
+    assert((*da)[2].field_1 == 1);
+    assert((*da)[3].field_1 == 4);
+    assert(da->size() == 4);
+    assert(da->checkMaxSize() == 4);
+    outOfRangeTest(4);
+
+    da->add(s3);
+    // Expected: [0, 2, 1, 4, 3]
+    assert((*da)[0].field_1 == 0);
+    assert((*da)[1].field_1 == 2);
+    assert((*da)[2].field_1 == 1);
+    assert((*da)[3].field_1 == 4);
+    assert((*da)[4].field_1 == 3);
+    assert(da->size() == 5);
+    assert(da->checkMaxSize() == 8);
+    outOfRangeTest(5);
+
+    // ---- Test set() methods ----
+    da->set(1, s3);
+    // Expected: [0, 3, 1, 4, 3]
+    assert((*da)[0].field_1 == 0);
+    assert((*da)[1].field_1 == 3);
+    assert((*da)[2].field_1 == 1);
+    assert((*da)[3].field_1 == 4);
+    assert((*da)[4].field_1 == 3);
+    assert(da->size() == 5);
+    assert(da->checkMaxSize() == 8);
+    outOfRangeTest(5);
+
+    da->set(4, s2);
+    // Expected: [0, 3, 1, 4, 2]
+    assert((*da)[0].field_1 == 0);
+    assert((*da)[1].field_1 == 3);
+    assert((*da)[2].field_1 == 1);
+    assert((*da)[3].field_1 == 4);
+    assert((*da)[4].field_1 == 2);
+    assert(da->size() == 5);
+    assert(da->checkMaxSize() == 8);
+    outOfRangeTest(5);
+
+    // ---- Test sort() methods ----
+    da->sort(compare);
+    // Expected: [0, 1, 2, 3, 4]
+    assert((*da)[0].field_1 == 0);
+    assert((*da)[1].field_1 == 1);
+    assert((*da)[2].field_1 == 2);
+    assert((*da)[3].field_1 == 3);
+    assert((*da)[4].field_1 == 4);
+    assert(da->size() == 5);
+    assert(da->checkMaxSize() == 8);
+    outOfRangeTest(5);
+
+    // ---- Test toString() method ----
+    assert(da->toString(toStringObj) == "[(0, a);(1, b);(2, c);(3, d);(4, e)]");
+
+    // ---- Test clear() methods ----
+    da->clear();
+    assert(da->size() == 0);
+    assert(da->checkMaxSize() == 1);
+    outOfRangeTest(0);
+    outOfRangeTest(-1);
 }
