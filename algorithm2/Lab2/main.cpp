@@ -15,8 +15,8 @@ struct Dynamic_array {
     Dynamic_array() : ratio(2), currSize(0), maxSize(1) { array = new T[maxSize]; }
     ~Dynamic_array() { delete[] array; }
 
-    int size() { return currSize; }
-    int checkMaxSize() { return maxSize; }
+    int size() const { return currSize; }
+    int checkMaxSize() const { return maxSize; }
 
     int add(T value) {
         if (currSize == maxSize) {
@@ -27,12 +27,12 @@ struct Dynamic_array {
         return SUCCESS;
     }
 
-    T at(int index) {
+    T& at(int index) const {
         checkOutOfRange(index);
         return array[index];
     }
 
-    T operator[](int index) {
+    T& operator[](int index) const {
         return at(index);
     }
 
@@ -94,7 +94,7 @@ private:
         return SUCCESS;
     }
 
-    void checkOutOfRange(int index) {
+    void checkOutOfRange(int index) const {
         if (index >= currSize || index < 0) {
             throw std::out_of_range("Index out of range");
         }
