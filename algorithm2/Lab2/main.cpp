@@ -18,59 +18,13 @@ struct Dynamic_array {
     int size() const { return currSize; }
     int checkMaxSize() const { return maxSize; }
 
-    int add(T value) {
-        if (currSize == maxSize) {
-            if (resize(maxSize * ratio, false) == FAIL) return FAIL;
-        }
-        array[currSize] = value;
-        currSize++;
-        return SUCCESS;
-    }
-
-    T& at(int index) const {
-        checkOutOfRange(index);
-        return array[index];
-    }
-
-    T& operator[](int index) const {
-        return at(index);
-    }
-
-    int set(int index, T newValue) {
-        checkOutOfRange(index);
-        array[index] = newValue;
-        return SUCCESS;
-    }
-
-    int clear() {
-        return resize(1, true);
-    }
-
-    std::string toString(std::string (*toStringObj)(const T&)) const {
-        std::string str = "[";
-        for (int i = 0; i < currSize; i++) {
-            if (i != 0) str+= ";";
-            str += toStringObj(array[i]);
-        }
-        str+= "]";
-
-        return str;
-    }
-
-    void sort(int (*cmp)(const T&, const T&)) {
-        if (currSize == 0 || currSize == 1) return;
-
-        bool ifSwapped = true;
-        while (ifSwapped) {
-            ifSwapped = false;
-            for (int i = 0; i < currSize - 1; i++) {
-                if (cmp(array[i], array[i + 1]) > 0) {
-                    swap(i, i + 1);
-                    ifSwapped = true;
-                }
-            }
-        }
-    }
+    int add(T value);
+    T& at(int index) const;
+    T& operator[](int index) const { return at(index); }
+    int set(int index, T newValue);
+    int clear() { return resize(1, true); }
+    std::string toString(std::string (*toStringObj)(const T&)) const;
+    void sort(int (*cmp)(const T&, const T&));
 
 private:    
     int ratio;
@@ -78,42 +32,10 @@ private:
     int maxSize;
     enum Status { SUCCESS = 0, FAIL = 1 };
 
-    int resize(int newSize, bool resetCurrSize) {
-        T* newArray;
-        if (getMemory(newArray, newSize) == FAIL) return FAIL;
-
-        currSize = (resetCurrSize) ? 0 : currSize;
-        maxSize = newSize;
-
-        for (int i = 0; i < currSize; i++) {
-            newArray[i] = array[i];
-        }
-        delete[] array;
-        array = newArray;
-
-        return SUCCESS;
-    }
-
-    void checkOutOfRange(int index) const {
-        if (index >= currSize || index < 0) {
-            throw std::out_of_range("Index out of range");
-        }
-    }
-
-    int getMemory(T* &array, int elements) {
-        try {
-            array = new T[elements];
-        } catch (const std::bad_alloc&) {
-            return FAIL;
-        }
-        return SUCCESS;
-    }
-
-    void swap(int index1, int index2) {
-        T temp = array[index1];
-        array[index1] = array[index2];
-        array[index2] = temp;
-    }
+    int resize(int newSize, bool resetCurrSize);
+    void checkOutOfRange(int index) const;
+    int getMemory(T* &array, int elements);
+    void swap(int index1, int index2);
 };
 
 struct SomeObject {
@@ -126,13 +48,15 @@ SomeObject createRandom();
 int compare(const SomeObject& new_obj, const SomeObject& list_obj);
 std::string toStringObj(const SomeObject& obj);
 
-std::string printColumn(std::string value, int width);
-void fillArray(int elements, Dynamic_array <SomeObject>* ll);
+std::string getColumn(std::string value, int width, char filling, char last);
+void printSeparator(int numOfMethods,int width);
+
+void fillArray(int elements, Dynamic_array <SomeObject>* da);
 
 template <typename Func>
-std::string measureMethod(Func func, Dynamic_array <SomeObject>* ll, int elements, bool requiresFill, int width, bool multiRun);
+std::string measureMethod(Func func, Dynamic_array <SomeObject>* da, int elements, bool requiresFill, int width, bool multiRun);
 
-void assertTests(Dynamic_array <SomeObject>* ll);
+void assertTests(Dynamic_array <SomeObject>* da);
 
 int main() {
     srand(time(0));
@@ -148,7 +72,7 @@ int main() {
     assertTests(da);
 
     // Maximum order: 9 (int overflow)
-    int maxOrder = 6;
+    int maxOrder = 5;
     int columnWidth = 11;
 
     struct TestArguments {
@@ -161,24 +85,31 @@ int main() {
 
     // Change first value (enabled) to reduce number of tests
     TestArguments testMethods[6] = {
-        {true, "add", [da]() { da->add(createRandom()); }, false, true},
-        {true, "at",  [da]() { da->at(rand() % da->size()); }, true, true},
-        {true, "set", [da]() { da->set(rand() % da->size(), createRandom()); }, true, true},
-        {true, "clear", [da]() { da->clear(); }, true, false},
-        {true, "toString", [da]() { da->toString(toStringObj); }, true, false},
-        {true, "sort", [da]() { da->sort(compare); }, true, false}
+        {true, "add()", [da]() { da->add(createRandom()); }, false, true},
+        {true, "at()",  [da]() { da->at(rand() % da->size()); }, true, true},
+        {true, "set()", [da]() { da->set(rand() % da->size(), createRandom()); }, true, true},
+        {true, "clear()", [da]() { da->clear(); }, true, false},
+        {true, "toString()", [da]() { da->toString(toStringObj); }, true, false},
+        {true, "sort()", [da]() { da->sort(compare); }, true, false}
     };
 
-    std::cout << "|" << printColumn("elements", columnWidth);
+    int countMethodsToPrint = 0;
     for (const TestArguments& testMethod : testMethods) {
-        if (testMethod.enabled) std::cout << printColumn(testMethod.name, columnWidth);
+        if (testMethod.enabled) countMethodsToPrint++;
+    }
+
+    printSeparator(countMethodsToPrint, columnWidth);
+    std::cout << "|" << getColumn("elements", columnWidth, ' ', '|');
+    for (const TestArguments& testMethod : testMethods) {
+        if (testMethod.enabled) std::cout << getColumn(testMethod.name, columnWidth, ' ', '|');
     }
     std::cout << std::endl;
+    printSeparator(countMethodsToPrint, columnWidth);
 
     // performance tests
     for (int o = 1; o <= maxOrder; o++) {
         int elements = pow(10, o);
-        std::cout << "|" << printColumn(std::to_string(elements), columnWidth);
+        std::cout << "|" << getColumn(std::to_string(elements), columnWidth, ' ', '|');
         for (const TestArguments& testMethod : testMethods) {
             if (testMethod.enabled) {
                 std::cout <<
@@ -190,8 +121,101 @@ int main() {
         }
         std::cout << std::endl;
     }
+    printSeparator(countMethodsToPrint, columnWidth);
 
     delete da;
+}
+
+template <typename T>
+int Dynamic_array<T>::add(T value) {
+    if (currSize == maxSize) {
+        if (resize(maxSize * ratio, false) == FAIL) return FAIL;
+    }
+    array[currSize] = value;
+    currSize++;
+    return SUCCESS;
+}
+
+template <typename T>
+T& Dynamic_array<T>::at(int index) const {
+    checkOutOfRange(index);
+    return array[index];
+}
+
+template <typename T>
+int Dynamic_array<T>::set(int index, T newValue) {
+    checkOutOfRange(index);
+    array[index] = newValue;
+    return SUCCESS;
+}
+
+template <typename T>
+std::string Dynamic_array<T>::toString(std::string (*toStringObj)(const T&)) const {
+    std::string str = "[";
+    for (int i = 0; i < currSize; i++) {
+        if (i != 0) str+= ";";
+        str += toStringObj(array[i]);
+    }
+    str+= "]";
+
+    return str;
+}
+
+template <typename T>
+void Dynamic_array<T>::sort(int (*cmp)(const T&, const T&)) {
+    if (currSize == 0 || currSize == 1) return;
+
+    bool ifSwapped = true;
+    while (ifSwapped) {
+        ifSwapped = false;
+        for (int i = 0; i < currSize - 1; i++) {
+            if (cmp(array[i], array[i + 1]) > 0) {
+                swap(i, i + 1);
+                ifSwapped = true;
+            }
+        }
+    }
+}
+
+template <typename T>
+int Dynamic_array<T>::resize(int newSize, bool resetCurrSize) {
+    T* newArray;
+    if (getMemory(newArray, newSize) == FAIL) return FAIL;
+
+    currSize = (resetCurrSize) ? 0 : currSize;
+    maxSize = newSize;
+
+    for (int i = 0; i < currSize; i++) {
+        newArray[i] = array[i];
+    }
+    delete[] array;
+    array = newArray;
+
+    return SUCCESS;
+}
+
+template <typename T>
+void Dynamic_array<T>::checkOutOfRange(int index) const {
+    if (index >= currSize || index < 0) {
+        throw std::out_of_range("Index out of range");
+    }
+}
+
+template <typename T>
+int Dynamic_array<T>::getMemory(T* &array, int elements) {
+    try {
+        array = new T[elements];
+    } catch (const std::bad_alloc&) {
+        return FAIL;
+    }
+    return SUCCESS;
+}
+
+template <typename T>
+void Dynamic_array<T>::swap(int index1, int index2) {
+    T temp = array[index1];
+    array[index1] = array[index2];
+    array[index2] = temp;
 }
 
 SomeObject createRandom() {
@@ -208,11 +232,19 @@ std::string toStringObj(const SomeObject& obj) {
     return "(" + std::to_string(obj.field_1) + ", " + obj.field_2 + ")";
 }
 
-std::string printColumn(std::string value, int width) {
+std::string getColumn(std::string value, int width, char filling, char last) {
     if (value.size() < width) {
-        return std::string(width - value.size(), ' ') + value + "|";
+        return std::string(width - value.size(), filling) + value + last;
     }
     return value;
+}
+
+void printSeparator(int numOfMethods,int width) {
+    std::cout << "+";
+    for (int i = 0; i <= numOfMethods; i++) {
+        std::cout << getColumn("", width, '-', '+');
+    }
+    std::cout << std::endl;
 }
 
 void fillArray(int elements, Dynamic_array <SomeObject>* da) {
@@ -237,7 +269,7 @@ std::string measureMethod(Func func, Dynamic_array <SomeObject>* da, int element
     double currTime = (t2 - t1) / (double)CLOCKS_PER_SEC;
     std:: string strTime = std::to_string(currTime);
     strTime.erase(strTime.size() - 3);
-    return printColumn(strTime, width);
+    return getColumn(strTime + 's', width, ' ', '|');
 }
 
 void assertTests(Dynamic_array <SomeObject>* da) {
