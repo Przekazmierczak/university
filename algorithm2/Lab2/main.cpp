@@ -8,6 +8,8 @@
 #include <time.h>
 #include <functional>
 
+#include <vector>
+
 template <typename T>
 struct Dynamic_array {
     T* array;
@@ -54,13 +56,18 @@ void printSeparator(int numOfMethods,int width);
 void fillArray(int elements, Dynamic_array <SomeObject>* da);
 
 template <typename Func>
-std::string measureMethod(Func func, Dynamic_array <SomeObject>* da, int elements, bool requiresFill, int width, bool multiRun);
+std::string measureMethod(Func func, Dynamic_array <SomeObject>* da, std::vector<SomeObject>*dv, int elements, bool requiresFill, int width, bool multiRun, bool ifVector);
 
 void assertTests(Dynamic_array <SomeObject>* da);
 
 int main() {
     srand(time(0));
     Dynamic_array <SomeObject>* da = new Dynamic_array <SomeObject>();
+    std::vector<SomeObject>* dv = new std::vector<SomeObject>();
+
+    auto compareV = [](const SomeObject &a, const SomeObject &b) {
+        return a.field_1 < b.field_1;
+    };
 
     SomeObject s0 = { 0, 'a' };
     SomeObject s1 = { 1, 'b' };
@@ -81,16 +88,22 @@ int main() {
         std::function<void()> body;
         bool requiresFill;
         bool multiRun;
+        bool ifVector;
     };
 
     // Change first value (enabled) to reduce number of tests
-    TestArguments testMethods[6] = {
-        {true, "add()", [da]() { da->add(createRandom()); }, false, true},
-        {true, "at()",  [da]() { da->at(rand() % da->size()); }, true, true},
-        {true, "set()", [da]() { da->set(rand() % da->size(), createRandom()); }, true, true},
-        {true, "clear()", [da]() { da->clear(); }, true, false},
-        {true, "toString()", [da]() { da->toString(toStringObj); }, true, false},
-        {true, "sort()", [da]() { da->sort(compare); }, true, false}
+    TestArguments testMethods[] = {
+        {true, "add()", [da]() { da->add(createRandom()); }, false, true, false},
+        {true, "vadd()", [dv]() { dv->push_back(createRandom()); },false, true, true},
+        {true, "at()",  [da]() { da->at(rand() % da->size()); }, true, true, false},
+        {true, "vat()", [dv]() { dv->at(rand() % dv->size()); }, true, true, true},
+        {true, "set()", [da]() { da->set(rand() % da->size(), createRandom()); }, true, true, false},
+        {true, "vset()", [dv]() { (*dv)[(rand() % dv->size())] = createRandom(); },true, true, true},
+        {true, "clear()", [da]() { da->clear(); }, true, false, false},
+        {true, "vclear()", [dv]() { dv->clear(); }, true, false, true},
+        {true, "toStr()", [da]() { da->toString(toStringObj); }, true, false, false},
+        {true, "sort()", [da]() { da->sort(compare); }, true, false, false},
+        {true, "vsort()", [dv, compareV]() { std::sort(dv->begin(), dv->end(), compareV); }, true, false, true},
     };
 
     int countMethodsToPrint = 0;
@@ -113,9 +126,9 @@ int main() {
         for (const TestArguments& testMethod : testMethods) {
             if (testMethod.enabled) {
                 std::cout <<
-                measureMethod(testMethod.body, da, elements,
+                measureMethod(testMethod.body, da, dv, elements,
                               testMethod.requiresFill, columnWidth,
-                              testMethod.multiRun)
+                              testMethod.multiRun, testMethod.ifVector)
                 << std::flush;
             }
         }
@@ -253,9 +266,20 @@ void fillArray(int elements, Dynamic_array <SomeObject>* da) {
     }
 }
 
+void fillVector(int elements, std::vector <SomeObject>* dv) {
+    for (int i = 0; i < elements; i++) {
+        dv->push_back(createRandom());
+    }
+}
+
 template <typename Func>
-std::string measureMethod(Func func, Dynamic_array <SomeObject>* da, int elements, bool requiresFill, int width, bool multiRun) {
-    if (requiresFill) fillArray(elements, da);
+std::string measureMethod(Func func, Dynamic_array <SomeObject>* da, std::vector<SomeObject>*dv, int elements, bool requiresFill, int width, bool multiRun, bool ifVector) {
+    if (!ifVector) {
+        if (requiresFill) fillArray(elements, da);
+    } else {
+        if (requiresFill) fillVector(elements, dv);
+    }
+    
     clock_t t1 = clock();
     if (multiRun) {
         for (int i = 0; i < elements; i++) {
@@ -265,7 +289,10 @@ std::string measureMethod(Func func, Dynamic_array <SomeObject>* da, int element
         func();
     }
     clock_t t2 = clock();
+
     da->clear();
+    dv->clear();
+
     double currTime = (t2 - t1) / (double)CLOCKS_PER_SEC;
     std:: string strTime = std::to_string(currTime);
     strTime.erase(strTime.size() - 3);
