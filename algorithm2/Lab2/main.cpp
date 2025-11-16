@@ -9,6 +9,7 @@
 #include <functional>
 
 #include <vector>
+#include <algorithm>
 
 template <typename T>
 struct Dynamic_array {
@@ -54,6 +55,7 @@ std::string getColumn(std::string value, int width, char filling, char last);
 void printSeparator(int numOfMethods,int width);
 
 void fillArray(int elements, Dynamic_array <SomeObject>* da);
+void fillVector(int elements, std::vector <SomeObject>* dv);
 
 template <typename Func>
 std::string measureMethod(Func func, Dynamic_array <SomeObject>* da, std::vector<SomeObject>*dv, int elements, bool requiresFill, int width, bool multiRun, bool ifVector);
@@ -96,7 +98,7 @@ int main() {
         {true, "add()", [da]() { da->add(createRandom()); }, false, true, false},
         {true, "vadd()", [dv]() { dv->push_back(createRandom()); },false, true, true},
         {true, "at()",  [da]() { da->at(rand() % da->size()); }, true, true, false},
-        {true, "vat()", [dv]() { dv->at(rand() % dv->size()); }, true, true, true},
+        {true, "vat()", [dv]() { (void)dv->at(rand() % dv->size()); }, true, true, true},
         {true, "set()", [da]() { da->set(rand() % da->size(), createRandom()); }, true, true, false},
         {true, "vset()", [dv]() { (*dv)[(rand() % dv->size())] = createRandom(); },true, true, true},
         {true, "clear()", [da]() { da->clear(); }, true, false, false},
