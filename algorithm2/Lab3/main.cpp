@@ -57,53 +57,67 @@ struct BST {
     };
 
     std::string toString(std::string (*toStringObj)(const T&)) {
-        int rows = 1;
+        // Every level of tree double the size + 1: 2^(treeHeight + 1) - 1
+        int rows = (1 << (treeHeight + 1)) - 1;
         int cols = treeHeight + 2;
 
-        for (int i = 0; i < treeHeight; i++) {
-            rows = rows * 2 + 1;
-        }
-
-        std::vector<std::vector<std::string>> treeGraph(cols, std::vector<std::string>(rows));
+        std::vector<std::vector<std::string>> treeGraph(cols, std::vector<std::string>(rows, "      "));
 
         for (int i = 0; i < rows; i++) {
             treeGraph[cols - 1][i] = "\n";
         }
+        addToGraph(root, 0, rows / 2, rows / 2, red("Root--"), treeGraph, toStringObj);
 
-        std::cout << rows << cols << std::endl;
-
-        addToGraph(root, 0, rows / 2, rows / 2, treeGraph, toStringObj);
-
-        std::string res;
+        std::string result;
+        std::string row;
+        bool ifNode;
 
         for (int i = 0; i < rows; i++) {
+            row = "";
+            ifNode = false;
             for (int j = 0; j < cols; j++) {
-                res += createColumn(treeGraph[j][i], 10);
+                if (treeGraph[j][i].size() > 15) ifNode = true;
+                row += treeGraph[j][i];
             }
+            if (ifNode) result += row;
         }
 
-        return res;
+        return result;
     }
 
-    void addToGraph(Node* curr, int col, int row, int size, std::vector<std::vector<std::string>> &treeGraph, std::string (*toStringObj)(const T&)) {
-        if (curr == nullptr) return;
+    void addToGraph(Node* curr, int col, int row, int size, std::string prefix, std::vector<std::vector<std::string>> &treeGraph, std::string (*toStringObj)(const T&)) {
         int newSize = size / 2;
-        int move = size / 2 + 1;
-        treeGraph[col][row] = toStringObj(curr->val);
-        addToGraph(curr->right, col + 1, row - move, newSize, treeGraph, toStringObj);
-        addToGraph(curr->left, col + 1, row + move, newSize, treeGraph, toStringObj);
+
+        treeGraph[col][row] = prefix + green("(" + toStringObj(curr->val) + ")");
+
+        if (curr->right) {
+            for (int i = 1; i < newSize + 1; i++) {
+                treeGraph[col + 1][row - i] = yellow("|     ");
+            }
+            addToGraph(curr->right, col + 1, row - (newSize + 1), newSize, yellow("R-----"), treeGraph, toStringObj);
+        };
+
+        if (curr->left) {
+            for (int i = 1; i < newSize + 1; i++) {
+                treeGraph[col + 1][row + i] = blue("|     ");
+            }
+            addToGraph(curr->left, col + 1, row + (newSize + 1), newSize, blue("L-----"), treeGraph, toStringObj);
+        };
     }
 
-    std::string createColumn(std::string value, int width) {
-        if (value.size() < width) {
-            char filling = ' ';
-            if (value != "" && value != "\n") {
-                filling = '-';
-            }
+    std::string yellow(std::string text) {
+        return "\033[33m" + text + "\033[0m";
+    }
 
-            return std::string(width - value.size(), filling) + value;
-        }
-        return value;
+    std::string green(std::string text) {
+        return "\033[32m" + text + "\033[0m";
+    }
+
+    std::string blue(std::string text) {
+        return "\033[34m" + text + "\033[0m";
+    }
+    std::string red(std::string text) {
+        return "\033[31m" + text + "\033[0m";
     }
 
 private:    
@@ -171,13 +185,12 @@ int main() {
     SomeObject s5 = { 5, 'f' };
     SomeObject s6 = { 6, 'g' };
 
-    da->add(s2, compare);
-    da->add(s4, compare);
-    da->add(s3, compare);
-    da->add(s1, compare);
-    da->add(s0, compare);
-    da->add(s5, compare);
-    da->add(s6, compare);
+    std::vector<SomeObject> tests = {s0, s1, s2, s3, s4, s5, s6};
+    
+    for (int i = 0; i < 1000; i++) {
+        da->add(createRandom(), compare);
+    }
+
 
     // std::cout << da->root->val.field_1 << std::endl;
     // std::cout << da->root->right->val.field_1 << std::endl;
@@ -249,7 +262,7 @@ int compare(const SomeObject& new_obj, const SomeObject& list_obj) {
 }
 
 std::string toStringObj(const SomeObject& obj) {
-    return "(" + std::to_string(obj.field_1) + ", " + obj.field_2 + ")";
+    return std::to_string(obj.field_1) + ", " + obj.field_2;
 }
 
 std::string getColumn(std::string value, int width, char filling, char last) {
