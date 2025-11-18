@@ -27,10 +27,6 @@ struct BST {
     };
     Node* root;
 
-    int treeSize;
-    bool treeHeightUpdated = true;
-    int treeHeight = -1;
-
     BST() { root = nullptr; }
     ~BST() {
         // clear();
@@ -62,57 +58,31 @@ struct BST {
         return findHelper(root, value, cmp);
     }
 
-    Node* findHelper(Node* curr, T value, int (*cmp)(const T&, const T&)) {
-        if (curr == nullptr) return nullptr;
-        int compare = cmp(curr->val, value);
-        if (compare == 0) return curr;
-        if (compare == 1) return findHelper(curr->left, value, cmp);
-        return findHelper(curr->right, value, cmp);
-    }
-
     int remove(T value, int (*cmp)(const T&, const T&)) {
         Node* node = find(value, cmp);
         if (node == nullptr) return FAIL;
+        
+        removeNode(node);
 
+        ifHeightUpdated = false;
 
+        return SUCCESS;
     }
 
-    int removeNode(Node* node) {
-        if (node->left == nullptr && node->right == nullptr) {
-            if (node->parent->left == node) {
-                node->parent->left = nullptr;
-            } else {
-                node->parent->right = nullptr;
-            }
-
-            delete node;
-        } else if (node->right == nullptr) {
-            if (node->parent->left == node) {
-                node->parent->left = node->left;
-            } else {
-                node->parent->right = node->left;
-            }
-            delete node;
-        } else if (node->left == nullptr) {
-            if (node->parent->left == node) {
-                node->parent->left = node->right;
-            } else {
-                node->parent->right = node->right;
-            }
-            delete node;
-        } else {
-            Node* neighbor = findNeighbor(node->left);
-            node->val = neighbor->val;
-            removeNode(neighbor);
+    int height() {
+        if (!ifHeightUpdated) {
+            treeHeight = updateHeight(root);
+            ifHeightUpdated = true;
         }
-    }
-
-    Node* findNeighbor(Node* node) {
-        while (node->right != nullptr) node = node->right;
-        return node;
+        return treeHeight;
     }
 
     std::string toString(std::string (*toStringObj)(const T&)) {
+        if (!ifHeightUpdated) {
+            treeHeight = updateHeight(root);
+            ifHeightUpdated = true;
+        }
+
         // Every level of tree double the size + 1: 2^(treeHeight + 1) - 1
         int rows = (1 << (treeHeight + 1)) - 1;
         int cols = treeHeight + 2;
@@ -141,6 +111,155 @@ struct BST {
         return result;
     }
 
+private:
+    int treeSize;
+    bool ifHeightUpdated = true;
+    int treeHeight = -1;
+
+    const int printWidth = 6;
+    enum Status { SUCCESS = 0, FAIL = 1 };
+
+    Node* createNewNode(T newNodeVal) {
+        try {
+            return new Node(newNodeVal);
+        }
+        catch (const std::bad_alloc&) {
+            return nullptr;
+        }
+    }
+
+    Node* findLeaf(T value, int (*cmp)(const T&, const T&)) {
+        Node* curr = root;
+        Node* prev;
+        int depth = 0;
+
+        while (curr) {
+            prev = curr;
+            if (cmp(value, curr->val) > 0) {
+                curr = curr->right;
+            } else {
+                curr = curr->left;
+            }
+            depth++;
+        }
+
+        if (ifHeightUpdated && treeHeight < depth) treeHeight = depth; 
+        return prev;
+    }
+
+    Node* findHelper(Node* curr, T value, int (*cmp)(const T&, const T&)) {
+        if (curr == nullptr) return nullptr;
+        int compare = cmp(curr->val, value);
+        if (compare == 0) return curr;
+        if (compare > 0) return findHelper(curr->left, value, cmp);
+        return findHelper(curr->right, value, cmp);
+    }
+
+    void removeNode(Node* node) {
+        if (node->left == nullptr && node->right == nullptr) {
+            removeWithNoChildren(node);
+        } else if (node->right == nullptr) {
+            removeWithOneChild(node, node->left);
+        } else if (node->left == nullptr) {
+            removeWithOneChild(node, node->right);
+        } else {
+            removeWithTwoChildren(node);
+        }
+    }
+
+    void removeWithNoChildren(Node* node) {
+        if (node->parent == nullptr) {
+            root = nullptr;
+        } else if (node->parent->left == node) {
+            node->parent->left = nullptr;
+        } else {
+            node->parent->right = nullptr;
+        }
+        delete node;
+    }
+
+    void removeWithOneChild(Node* node, Node* child) {
+        if (node->parent == nullptr) {
+            root = child;
+            child->parent = nullptr;
+        } else if (node->parent->left == node) {
+            node->parent->left = child;
+            child->parent = node->parent;
+        } else {
+            node->parent->right = child;
+            child->parent = node->parent;
+        }
+        delete node;
+    }
+
+    void removeWithTwoChildren(Node* node) {
+        Node* neighbor = findNeighbor(node->left);
+
+        Node* child = neighbor->left;
+
+        if (neighbor->parent->right == neighbor) {
+            neighbor->parent->right = child;
+        } else if (neighbor->parent->left == neighbor) {
+            neighbor->parent->left = child;
+        }
+        if (child) child->parent = neighbor->parent;
+
+        neighbor->parent = node->parent;
+        neighbor->left = node->left;
+        neighbor->right = node->right;
+
+        if (node->left) node->left->parent = neighbor;
+        if (node->right) node->right->parent = neighbor;
+
+        if (node->parent == nullptr) {
+            root = neighbor;
+        } else if (node->parent->left == node) {
+            node->parent->left = neighbor;
+        } else {
+            node->parent->right = neighbor;
+        }
+
+        delete node;
+    }
+
+    Node* findNeighbor(Node* node) {
+        while (node->right != nullptr) node = node->right;
+        return node;
+    }
+
+    // void swap(Node* node, Node* neighbor) {
+    //     Node* child = neighbor->left;
+
+    //     if (neighbor->parent->right == neighbor) {
+    //         neighbor->parent->right = child;
+    //     } else if (neighbor->parent->left == neighbor) {
+    //         neighbor->parent->left = child;
+    //     }
+    //     if (child) child->parent = neighbor->parent;
+
+    //     neighbor->parent = node->parent;
+    //     neighbor->left = node->left;
+    //     neighbor->right = node->right;
+
+    //     if (node->left) node->left->parent = neighbor;
+    //     if (node->right) node->right->parent = neighbor;
+
+    //     if (node->parent == nullptr) {
+    //         root = neighbor;
+    //     } else if (node->parent->left == node) {
+    //         node->parent->left = neighbor;
+    //     } else {
+    //         node->parent->right = neighbor;
+    //     }
+
+    //     delete node;
+    // }
+
+    int updateHeight(Node* curr) {
+        if (!curr) return -1;
+        return std::max(updateHeight(curr->left) + 1, updateHeight(curr->right) + 1);
+    }
+
     void addToGraph(
         Node* curr, int col, int row, int size,
         std::string prefix,
@@ -148,8 +267,9 @@ struct BST {
         std::string (*toStringObj)(const T&)
         ) {
         int newSize = size / 2;
-
-        treeGraph[col][row] = prefix + green("(" + toStringObj(curr->val) + ")");
+        std::string parent = "";
+        if (curr->parent) parent = red("(" + toStringObj(curr->parent->val) + ")");
+        treeGraph[col][row] = prefix + green("(" + toStringObj(curr->val) + ")") + parent;
         treeGraph[col + 1][row] = "\n";
 
         if (curr->right) {
@@ -187,38 +307,6 @@ struct BST {
     std::string red(std::string text) {
         return "\033[31m" + text + "\033[0m";
     }
-
-private:    
-    const int printWidth = 6;
-    enum Status { SUCCESS = 0, FAIL = 1 };
-
-    Node* createNewNode(T newNodeVal) {
-        try {
-            return new Node(newNodeVal);
-        }
-        catch (const std::bad_alloc&) {
-            return nullptr;
-        }
-    }
-
-    Node* findLeaf(T value, int (*cmp)(const T&, const T&)) {
-        Node* curr = root;
-        Node* prev;
-        int depth = 0;
-
-        while (curr) {
-            prev = curr;
-            if (cmp(value, curr->val) > 0) {
-                curr = curr->right;
-            } else {
-                curr = curr->left;
-            }
-            depth++;
-        }
-
-        if (treeHeightUpdated && treeHeight < depth) treeHeight = depth; 
-        return prev;
-    }
 };
 
 struct SomeObject {
@@ -252,6 +340,10 @@ int main() {
     SomeObject s4 = { 4, 'e' };
     SomeObject s5 = { 5, 'f' };
     SomeObject s6 = { 6, 'g' };
+    SomeObject s7 = { 7, 'h' };
+    SomeObject s8 = { 8, 'i' };
+    SomeObject s9 = { 9, 'j' };
+    SomeObject s10 = { 10, 'k' };
 
     // std::vector<SomeObject> tests = {s0, s1, s2, s3, s4, s5, s6};
     
@@ -259,26 +351,43 @@ int main() {
     //     da->add(createRandom(), compare);
     // }
 
-    da->add(s3, compare);
-    da->add(s1, compare);
-    da->add(s0, compare);
-    da->add(s2, compare);
+    // da->add(s3, compare);
+    // da->add(s2, compare);
+    // da->add(s1, compare);
+    // da->add(s4, compare);
+    // da->add(s0, compare);
+    // da->add(s5, compare);
+    // da->add(s6, compare);
+    // // da->add(s3, compare);
+    // // da->add(s3, compare);
+    // da->add(s1, compare);
+    // da->add(s1, compare);
+    // da->add(s1, compare);
+    // // da->add(s4, compare);
+    da->add(s10, compare);
     da->add(s5, compare);
-    da->add(s6, compare);
+    da->add(s3, compare);
+    da->add(s7, compare);
+
+    std::cout << da->toString(toStringObj) << std::endl;
+    std::cout << da->height() << std::endl;
+
+    da->remove(s10, compare);
     
-    BST<SomeObject>::Node* node = da->find(s4, compare);
-    if (node) {
-        std::cout << node->val.field_1 << std::endl;
-    } else {
-        std::cout << "Miss" << std::endl;
-    }
+    // BST<SomeObject>::Node* node = da->find(s4, compare);
+    // if (node) {
+    //     std::cout << node->val.field_1 << std::endl;
+    // } else {
+    //     std::cout << "Miss" << std::endl;
+    // }
 
     // std::cout << da->root->val.field_1 << std::endl;
     // std::cout << da->root->right->val.field_1 << std::endl;
     // std::cout << da->root->right->left->val.field_1 << std::endl;
     // std::cout << da->treeHeight << std::endl;
     std::cout << da->toString(toStringObj) << std::endl;
-
+    std::cout << da->height() << std::endl;
+    
     // // Small correctness check
     // assertTests(da);
 
