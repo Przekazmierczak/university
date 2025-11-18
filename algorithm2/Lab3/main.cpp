@@ -52,56 +52,124 @@ struct BST {
             } else {
                 leaf->left = newNode;
             }
+
+            newNode->parent = leaf;
         }
         return SUCCESS;
     };
+
+    Node* find(T value, int (*cmp)(const T&, const T&)) {
+        return findHelper(root, value, cmp);
+    }
+
+    Node* findHelper(Node* curr, T value, int (*cmp)(const T&, const T&)) {
+        if (curr == nullptr) return nullptr;
+        int compare = cmp(curr->val, value);
+        if (compare == 0) return curr;
+        if (compare == 1) return findHelper(curr->left, value, cmp);
+        return findHelper(curr->right, value, cmp);
+    }
+
+    int remove(T value, int (*cmp)(const T&, const T&)) {
+        Node* node = find(value, cmp);
+        if (node == nullptr) return FAIL;
+
+
+    }
+
+    int removeNode(Node* node) {
+        if (node->left == nullptr && node->right == nullptr) {
+            if (node->parent->left == node) {
+                node->parent->left = nullptr;
+            } else {
+                node->parent->right = nullptr;
+            }
+
+            delete node;
+        } else if (node->right == nullptr) {
+            if (node->parent->left == node) {
+                node->parent->left = node->left;
+            } else {
+                node->parent->right = node->left;
+            }
+            delete node;
+        } else if (node->left == nullptr) {
+            if (node->parent->left == node) {
+                node->parent->left = node->right;
+            } else {
+                node->parent->right = node->right;
+            }
+            delete node;
+        } else {
+            Node* neighbor = findNeighbor(node->left);
+            node->val = neighbor->val;
+            removeNode(neighbor);
+        }
+    }
+
+    Node* findNeighbor(Node* node) {
+        while (node->right != nullptr) node = node->right;
+        return node;
+    }
 
     std::string toString(std::string (*toStringObj)(const T&)) {
         // Every level of tree double the size + 1: 2^(treeHeight + 1) - 1
         int rows = (1 << (treeHeight + 1)) - 1;
         int cols = treeHeight + 2;
 
-        std::vector<std::vector<std::string>> treeGraph(cols, std::vector<std::string>(rows, "      "));
+        std::vector<std::vector<std::string>> treeGraph(cols, std::vector<std::string>(rows, std::string(printWidth, ' ')));
 
-        for (int i = 0; i < rows; i++) {
-            treeGraph[cols - 1][i] = "\n";
-        }
-        addToGraph(root, 0, rows / 2, rows / 2, red("Root--"), treeGraph, toStringObj);
+        addToGraph(root, 0, rows / 2, rows / 2,
+                   red("Root" + std::string(printWidth - 4, '-')),
+                   treeGraph,
+                   toStringObj);
 
         std::string result;
         std::string row;
-        bool ifNode;
-
+        
         for (int i = 0; i < rows; i++) {
             row = "";
-            ifNode = false;
             for (int j = 0; j < cols; j++) {
-                if (treeGraph[j][i].size() > 15) ifNode = true;
                 row += treeGraph[j][i];
+                if (treeGraph[j][i] == "\n") {
+                    result += row;
+                    break;
+                }
             }
-            if (ifNode) result += row;
         }
 
         return result;
     }
 
-    void addToGraph(Node* curr, int col, int row, int size, std::string prefix, std::vector<std::vector<std::string>> &treeGraph, std::string (*toStringObj)(const T&)) {
+    void addToGraph(
+        Node* curr, int col, int row, int size,
+        std::string prefix,
+        std::vector<std::vector<std::string>> &treeGraph,
+        std::string (*toStringObj)(const T&)
+        ) {
         int newSize = size / 2;
 
         treeGraph[col][row] = prefix + green("(" + toStringObj(curr->val) + ")");
+        treeGraph[col + 1][row] = "\n";
 
         if (curr->right) {
             for (int i = 1; i < newSize + 1; i++) {
-                treeGraph[col + 1][row - i] = yellow("|     ");
+                treeGraph[col + 1][row - i] = yellow("|") + std::string(printWidth - 1, ' ');
             }
-            addToGraph(curr->right, col + 1, row - (newSize + 1), newSize, yellow("R-----"), treeGraph, toStringObj);
+            addToGraph(curr->right, col + 1, row - (newSize + 1), newSize,
+                       yellow("R" + std::string(printWidth - 1, '-')),
+                       treeGraph,
+                       toStringObj);
         };
 
         if (curr->left) {
             for (int i = 1; i < newSize + 1; i++) {
-                treeGraph[col + 1][row + i] = blue("|     ");
+                treeGraph[col + 1][row + i] = blue("|") + std::string(printWidth - 1, ' ');
             }
-            addToGraph(curr->left, col + 1, row + (newSize + 1), newSize, blue("L-----"), treeGraph, toStringObj);
+            addToGraph(curr->left, col + 1, row + (newSize + 1), newSize,
+                       blue("L" + std::string(printWidth - 1, '-')),
+                       treeGraph,
+                       toStringObj);
         };
     }
 
@@ -121,7 +189,7 @@ struct BST {
     }
 
 private:    
-
+    const int printWidth = 6;
     enum Status { SUCCESS = 0, FAIL = 1 };
 
     Node* createNewNode(T newNodeVal) {
@@ -185,12 +253,25 @@ int main() {
     SomeObject s5 = { 5, 'f' };
     SomeObject s6 = { 6, 'g' };
 
-    std::vector<SomeObject> tests = {s0, s1, s2, s3, s4, s5, s6};
+    // std::vector<SomeObject> tests = {s0, s1, s2, s3, s4, s5, s6};
     
-    for (int i = 0; i < 1000; i++) {
-        da->add(createRandom(), compare);
-    }
+    // for (int i = 0; i < 20; i++) {
+    //     da->add(createRandom(), compare);
+    // }
 
+    da->add(s3, compare);
+    da->add(s1, compare);
+    da->add(s0, compare);
+    da->add(s2, compare);
+    da->add(s5, compare);
+    da->add(s6, compare);
+    
+    BST<SomeObject>::Node* node = da->find(s4, compare);
+    if (node) {
+        std::cout << node->val.field_1 << std::endl;
+    } else {
+        std::cout << "Miss" << std::endl;
+    }
 
     // std::cout << da->root->val.field_1 << std::endl;
     // std::cout << da->root->right->val.field_1 << std::endl;
@@ -280,27 +361,27 @@ void printSeparator(int numOfMethods,int width) {
     std::cout << std::endl;
 }
 
-template <typename Func>
-std::string measureMethod(Func func, BST <SomeObject>* da, int elements, bool requiresFill, int width, bool multiRun) {
-    if (requiresFill) fillVector(elements, dv);
+// template <typename Func>
+// std::string measureMethod(Func func, BST <SomeObject>* da, int elements, bool requiresFill, int width, bool multiRun) {
+//     if (requiresFill) fillVector(elements, dv);
 
-    clock_t t1 = clock();
-    if (multiRun) {
-        for (int i = 0; i < elements; i++) {
-            func();
-        }
-    } else {
-        func();
-    }
-    clock_t t2 = clock();
+//     clock_t t1 = clock();
+//     if (multiRun) {
+//         for (int i = 0; i < elements; i++) {
+//             func();
+//         }
+//     } else {
+//         func();
+//     }
+//     clock_t t2 = clock();
 
-    da->clear();
+//     da->clear();
 
-    double currTime = (t2 - t1) / (double)CLOCKS_PER_SEC;
-    std:: string strTime = std::to_string(currTime);
-    strTime.erase(strTime.size() - 3);
-    return getColumn(strTime + 's', width, ' ', '|');
-}
+//     double currTime = (t2 - t1) / (double)CLOCKS_PER_SEC;
+//     std:: string strTime = std::to_string(currTime);
+//     strTime.erase(strTime.size() - 3);
+//     return getColumn(strTime + 's', width, ' ', '|');
+// }
 
 // void assertTests(Dynamic_array <SomeObject>* da) {
 //     SomeObject s0 = { 0, 'a' };
