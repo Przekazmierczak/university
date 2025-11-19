@@ -29,7 +29,7 @@ struct BST {
 
     BST() { root = nullptr; }
     ~BST() {
-        // clear();
+        clear();
     }
 
     int size() const { return treeSize; }
@@ -40,6 +40,7 @@ struct BST {
 
         if (root == nullptr) {
             root = newNode;
+            treeHeight++;
         } else {
             Node* leaf = findLeaf(value, cmp);
 
@@ -51,6 +52,7 @@ struct BST {
 
             newNode->parent = leaf;
         }
+        treeSize++;
         return SUCCESS;
     };
 
@@ -64,9 +66,51 @@ struct BST {
         
         removeNode(node);
 
+        treeSize--;
         ifHeightUpdated = false;
 
         return SUCCESS;
+    }
+
+    std::vector<T> preorder() {
+        std::vector<T> pre;
+        preorderHelper(root, pre);
+        return pre;
+    }
+
+    void preorderHelper(Node* node, std::vector<T> &pre) {
+        if (!node) return;
+        pre.push_back(node->val);
+        preorderHelper(node->left, pre);
+        preorderHelper(node->right, pre);
+    }
+
+    std::vector<T> inorder() {
+        std::vector<T> in;
+        inorderHelper(root, in);
+        return in;
+    }
+
+    void inorderHelper(Node* node, std::vector<T> &in) {
+        if (!node) return;
+        inorderHelper(node->left, in);
+        in.push_back(node->val);
+        inorderHelper(node->right, in);
+    }
+
+    void clear() {
+        clearHelper(root);
+        root = nullptr;
+        treeSize = 0;
+        treeHeight = -1;
+        ifHeightUpdated = true;
+    }
+
+    void clearHelper(Node* node) {
+        if (!node) return;
+        clearHelper(node->left);
+        clearHelper(node->right);
+        delete node;
     }
 
     int height() {
@@ -112,7 +156,7 @@ struct BST {
     }
 
 private:
-    int treeSize;
+    int treeSize = 0;
     bool ifHeightUpdated = true;
     int treeHeight = -1;
 
@@ -267,9 +311,9 @@ private:
         std::string (*toStringObj)(const T&)
         ) {
         int newSize = size / 2;
-        std::string parent = "";
-        if (curr->parent) parent = red("(" + toStringObj(curr->parent->val) + ")");
-        treeGraph[col][row] = prefix + green("(" + toStringObj(curr->val) + ")") + parent;
+        std::string parent = red("P:(Null)");
+        if (curr->parent) parent = red("P:(" + toStringObj(curr->parent->val) + ")");
+        treeGraph[col][row] = prefix + green("N:(" + toStringObj(curr->val) + ")") + parent;
         treeGraph[col + 1][row] = "\n";
 
         if (curr->right) {
@@ -331,65 +375,12 @@ void assertTests(BST <SomeObject>* da);
 
 int main() {
     srand(time(0));
-    BST <SomeObject>* da = new BST <SomeObject>();
+    BST <SomeObject>* bst = new BST <SomeObject>();
 
-    SomeObject s0 = { 0, 'a' };
-    SomeObject s1 = { 1, 'b' };
-    SomeObject s2 = { 2, 'c' };
-    SomeObject s3 = { 3, 'd' };
-    SomeObject s4 = { 4, 'e' };
-    SomeObject s5 = { 5, 'f' };
-    SomeObject s6 = { 6, 'g' };
-    SomeObject s7 = { 7, 'h' };
-    SomeObject s8 = { 8, 'i' };
-    SomeObject s9 = { 9, 'j' };
-    SomeObject s10 = { 10, 'k' };
-
-    // std::vector<SomeObject> tests = {s0, s1, s2, s3, s4, s5, s6};
     
-    // for (int i = 0; i < 20; i++) {
-    //     da->add(createRandom(), compare);
-    // }
-
-    // da->add(s3, compare);
-    // da->add(s2, compare);
-    // da->add(s1, compare);
-    // da->add(s4, compare);
-    // da->add(s0, compare);
-    // da->add(s5, compare);
-    // da->add(s6, compare);
-    // // da->add(s3, compare);
-    // // da->add(s3, compare);
-    // da->add(s1, compare);
-    // da->add(s1, compare);
-    // da->add(s1, compare);
-    // // da->add(s4, compare);
-    da->add(s10, compare);
-    da->add(s5, compare);
-    da->add(s3, compare);
-    da->add(s7, compare);
-
-    std::cout << da->toString(toStringObj) << std::endl;
-    std::cout << da->height() << std::endl;
-
-    da->remove(s10, compare);
     
-    // BST<SomeObject>::Node* node = da->find(s4, compare);
-    // if (node) {
-    //     std::cout << node->val.field_1 << std::endl;
-    // } else {
-    //     std::cout << "Miss" << std::endl;
-    // }
-
-    // std::cout << da->root->val.field_1 << std::endl;
-    // std::cout << da->root->right->val.field_1 << std::endl;
-    // std::cout << da->root->right->left->val.field_1 << std::endl;
-    // std::cout << da->treeHeight << std::endl;
-    std::cout << da->toString(toStringObj) << std::endl;
-    std::cout << da->height() << std::endl;
-    
-    // // Small correctness check
-    // assertTests(da);
+    // Small correctness check
+    assertTests(bst);
 
     // // Maximum order: 9 (int overflow)
     // int maxOrder = 5;
@@ -438,7 +429,7 @@ int main() {
     // }
     // printSeparator(countMethodsToPrint, columnWidth);
 
-    delete da;
+    delete bst;
 }
 
 SomeObject createRandom() {
@@ -492,111 +483,103 @@ void printSeparator(int numOfMethods,int width) {
 //     return getColumn(strTime + 's', width, ' ', '|');
 // }
 
-// void assertTests(Dynamic_array <SomeObject>* da) {
-//     SomeObject s0 = { 0, 'a' };
-//     SomeObject s1 = { 1, 'b' };
-//     SomeObject s2 = { 2, 'c' };
-//     SomeObject s3 = { 3, 'd' };
-//     SomeObject s4 = { 4, 'e' };
+void assertTests(BST <SomeObject>* bst) {
+    SomeObject s0 = { 0, 'a' };
+    SomeObject s1 = { 1, 'b' };
+    SomeObject s2 = { 2, 'c' };
+    SomeObject s3 = { 3, 'd' };
+    SomeObject s4 = { 4, 'e' };
+    SomeObject s5 = { 5, 'f' };
+    SomeObject s6 = { 6, 'g' };
+    SomeObject s7 = { 7, 'h' };
+    SomeObject s8 = { 8, 'i' };
+    SomeObject s9 = { 9, 'j' };
+    SomeObject s10 = { 10, 'k' };
+    SomeObject s11 = { 11, 'i' };
+    
+    // for (int i = 0; i < 20; i++) {
+    //     bst->add(createRandom(), compare);
+    // }
 
-//     auto outOfRangeTest = [&da](int index) {
-//         bool outOfRange = false;
-//         try {
-//             (*da)[index];
-//         } catch (std::out_of_range&) {
-//             outOfRange = true;
-//         }
-//         assert(outOfRange == true);
-//     };
+    // std::cout << bst->toString(toStringObj) << std::endl;
 
-//     // ---- Test add() methods ----
-//     da->add(s0);
-//     // Expected: [0]
-//     assert((*da)[0].field_1 == 0);
-//     assert(da->size() == 1);
-//     assert(da->checkMaxSize() == 1);
-//     outOfRangeTest(1);
+    // ---- Test add() methods ----
+    assert(bst->root == nullptr);
+    assert(bst->size() == 0);
+    assert(bst->height() == -1);
 
-//     da->add(s2);
-//     // Expected: [0, 2]
-//     assert((*da)[0].field_1 == 0);
-//     assert((*da)[1].field_1 == 2);
-//     assert(da->size() == 2);
-//     assert(da->checkMaxSize() == 2);
-//     outOfRangeTest(2);
+    bst->add(s5, compare);
+    assert(bst->root->val.field_1 == 5);
+    assert(bst->size() == 1);
+    assert(bst->height() == 0);
 
-//     da->add(s1);
-//     // Expected: [0, 2, 1]
-//     assert((*da)[0].field_1 == 0);
-//     assert((*da)[1].field_1 == 2);
-//     assert((*da)[2].field_1 == 1);
-//     assert(da->size() == 3);
-//     assert(da->checkMaxSize() == 4);
-//     outOfRangeTest(3);
+    bst->add(s3, compare);
+    assert(bst->root->val.field_1 == 5);
+    assert(bst->root->left->val.field_1 == 3);
+    assert(bst->size() == 2);
+    assert(bst->height() == 1);
 
-//     da->add(s4);
-//     // Expected: [0, 2, 1, 4]
-//     assert((*da)[0].field_1 == 0);
-//     assert((*da)[1].field_1 == 2);
-//     assert((*da)[2].field_1 == 1);
-//     assert((*da)[3].field_1 == 4);
-//     assert(da->size() == 4);
-//     assert(da->checkMaxSize() == 4);
-//     outOfRangeTest(4);
+    bst->add(s7, compare);
+    assert(bst->root->val.field_1 == 5);
+    assert(bst->root->left->val.field_1 == 3);
+    assert(bst->root->right->val.field_1 == 7);
+    assert(bst->size() == 3);
+    assert(bst->height() == 1);
+    
+    bst->add(s1, compare);
+    assert(bst->root->val.field_1 == 5);
+    assert(bst->root->left->val.field_1 == 3);
+    assert(bst->root->right->val.field_1 == 7);
+    assert(bst->root->left->left->val.field_1 == 1);
+    assert(bst->size() == 4);
+    assert(bst->height() == 2);
 
-//     da->add(s3);
-//     // Expected: [0, 2, 1, 4, 3]
-//     assert((*da)[0].field_1 == 0);
-//     assert((*da)[1].field_1 == 2);
-//     assert((*da)[2].field_1 == 1);
-//     assert((*da)[3].field_1 == 4);
-//     assert((*da)[4].field_1 == 3);
-//     assert(da->size() == 5);
-//     assert(da->checkMaxSize() == 8);
-//     outOfRangeTest(5);
+    bst->add(s4, compare);
+    assert(bst->root->val.field_1 == 5);
+    assert(bst->root->left->val.field_1 == 3);
+    assert(bst->root->right->val.field_1 == 7);
+    assert(bst->root->left->left->val.field_1 == 1);
+    assert(bst->root->left->right->val.field_1 == 4);
+    assert(bst->size() == 5);
+    assert(bst->height() == 2);
 
-//     // ---- Test set() methods ----
-//     da->set(1, s3);
-//     // Expected: [0, 3, 1, 4, 3]
-//     assert((*da)[0].field_1 == 0);
-//     assert((*da)[1].field_1 == 3);
-//     assert((*da)[2].field_1 == 1);
-//     assert((*da)[3].field_1 == 4);
-//     assert((*da)[4].field_1 == 3);
-//     assert(da->size() == 5);
-//     assert(da->checkMaxSize() == 8);
-//     outOfRangeTest(5);
+    bst->add(s6, compare);
+    assert(bst->root->right->left->val.field_1 == 6);
+    assert(bst->size() == 6);
+    assert(bst->height() == 2);
 
-//     da->set(4, s2);
-//     // Expected: [0, 3, 1, 4, 2]
-//     assert((*da)[0].field_1 == 0);
-//     assert((*da)[1].field_1 == 3);
-//     assert((*da)[2].field_1 == 1);
-//     assert((*da)[3].field_1 == 4);
-//     assert((*da)[4].field_1 == 2);
-//     assert(da->size() == 5);
-//     assert(da->checkMaxSize() == 8);
-//     outOfRangeTest(5);
+    bst->add(s9, compare);
+    assert(bst->root->right->right->val.field_1 == 9);
+    assert(bst->size() == 7);
+    assert(bst->height() == 2);
 
-//     // ---- Test sort() methods ----
-//     da->sort(compare);
-//     // Expected: [0, 1, 2, 3, 4]
-//     assert((*da)[0].field_1 == 0);
-//     assert((*da)[1].field_1 == 1);
-//     assert((*da)[2].field_1 == 2);
-//     assert((*da)[3].field_1 == 3);
-//     assert((*da)[4].field_1 == 4);
-//     assert(da->size() == 5);
-//     assert(da->checkMaxSize() == 8);
-//     outOfRangeTest(5);
+    bst->add(s0, compare);
+    assert(bst->root->left->left->left->val.field_1 == 0);
+    assert(bst->size() == 8);
+    assert(bst->height() == 3);
 
-//     // ---- Test toString() method ----
-//     assert(da->toString(toStringObj) == "[(0, a);(1, b);(2, c);(3, d);(4, e)]");
+    bst->add(s2, compare);
+    assert(bst->root->left->left->right->val.field_1 == 2);
+    assert(bst->size() == 9);
+    assert(bst->height() == 3);
 
-//     // ---- Test clear() methods ----
-//     da->clear();
-//     assert(da->size() == 0);
-//     assert(da->checkMaxSize() == 1);
-//     outOfRangeTest(0);
-//     outOfRangeTest(-1);
-// }
+    bst->add(s8, compare);
+    assert(bst->root->right->right->left->val.field_1 == 8);
+    assert(bst->size() == 10);
+    assert(bst->height() == 3);
+
+    bst->add(s10, compare);
+    assert(bst->root->right->right->right->val.field_1 == 10);
+    assert(bst->size() == 11);
+    assert(bst->height() == 3);
+
+    // ---- Test find() methods ----
+    assert((bst->find(s1, compare))->val.field_1 == 1);
+    assert((bst->find(s3, compare))->val.field_1 == 3);
+    assert((bst->find(s5, compare))->val.field_1 == 5);
+    assert((bst->find(s7, compare))->val.field_1 == 7);
+    assert((bst->find(s9, compare))->val.field_1 == 9);
+    assert((bst->find(s11, compare)) == nullptr);
+
+    std::cout << bst->toString(toStringObj) << std::endl;
+}
