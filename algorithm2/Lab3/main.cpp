@@ -32,111 +32,18 @@ struct BST {
     ~BST() { clear(); }
 
     int size() const { return treeSize; }
-    int height() {
-        if (!ifHeightUpdated) {
-            treeHeight = updateHeight(root);
-            ifHeightUpdated = true;
-        }
-        return treeHeight;
-    }
+    int height();
 
-    int add(T value, int (*cmp)(const T&, const T&)) {
-        Node* newNode = createNewNode(value);
-        if (newNode == nullptr) return FAIL;
+    int add(T value, int (*cmp)(const T&, const T&));
+    Node* find(T value, int (*cmp)(const T&, const T&));
+    int remove(T value, int (*cmp)(const T&, const T&));
 
-        if (root == nullptr) {
-            root = newNode;
-            treeHeight++;
-        } else {
-            Node* leaf = findLeaf(value, cmp);
+    std::vector<T> preorder();
+    std::vector<T> inorder();
 
-            if (cmp(value, leaf->val) > 0) {
-                leaf->right = newNode;
-            } else {
-                leaf->left = newNode;
-            }
+    void clear();
 
-            newNode->parent = leaf;
-        }
-        treeSize++;
-        return SUCCESS;
-    };
-
-    Node* find(T value, int (*cmp)(const T&, const T&)) {
-        return findHelper(root, value, cmp);
-    }
-
-    int remove(T value, int (*cmp)(const T&, const T&)) {
-        Node* node = find(value, cmp);
-        if (node == nullptr) return FAIL;
-        
-        removeNode(node);
-
-        treeSize--;
-        ifHeightUpdated = false;
-
-        return SUCCESS;
-    }
-
-    std::vector<T> preorder() {
-        std::vector<T> pre;
-        preorderHelper(root, pre);
-        return pre;
-    }
-
-
-    std::vector<T> inorder() {
-        std::vector<T> in;
-        inorderHelper(root, in);
-        return in;
-    }
-
-
-    void clear() {
-        clearHelper(root);
-        root = nullptr;
-        treeSize = 0;
-        treeHeight = -1;
-        ifHeightUpdated = true;
-    }
-
-    std::string toString(std::string (*toStringObj)(const T&), bool ifColor, bool ifParent) {
-        if (!root) return "";
-
-        if (!ifHeightUpdated) {
-            treeHeight = updateHeight(root);
-            ifHeightUpdated = true;
-        }
-
-        // Every level of tree double the size + 1: 2^(treeHeight + 1) - 1
-        int rows = (1 << (treeHeight + 1)) - 1;
-        int cols = treeHeight + 2;
-
-        std::vector<std::vector<std::string>> treeGraph(cols, std::vector<std::string>(rows, std::string(printWidth, ' ')));
-
-        addToGraph(root, 0, rows / 2, rows / 2,
-                   ifColor ? red("Root" + std::string(printWidth - 4, '-'))
-                           : "Root" + std::string(printWidth - 4, '-'),
-                   treeGraph,
-                   toStringObj,
-                   ifColor, ifParent);
-
-        std::string result;
-        std::string row;
-        
-        for (int i = 0; i < rows; i++) {
-            row = "";
-            for (int j = 0; j < cols; j++) {
-                row += treeGraph[j][i];
-                if (treeGraph[j][i] == "\n") {
-                    result += row;
-                    break;
-                }
-            }
-        }
-
-        return result;
-    }
+    std::string toString(std::string (*toStringObj)(const T&), bool ifColor, bool ifParent);
 
 private:
     int treeSize = 0;
@@ -146,139 +53,22 @@ private:
     const int printWidth = 6;
     enum Status { SUCCESS = 0, FAIL = 1 };
 
-    int updateHeight(Node* curr) {
-        if (!curr) return -1;
-        return std::max(updateHeight(curr->left) + 1, updateHeight(curr->right) + 1);
-    }
+    int updateHeight(Node* curr);
+    Node* createNewNode(T newNodeVal);
+    Node* findLeaf(T value, int (*cmp)(const T&, const T&));
+    Node* findHelper(Node* curr, T value, int (*cmp)(const T&, const T&));
 
-    Node* createNewNode(T newNodeVal) {
-        try {
-            return new Node(newNodeVal);
-        }
-        catch (const std::bad_alloc&) {
-            return nullptr;
-        }
-    }
+    void removeNode(Node* node);
+    void removeWithNoChildren(Node* node);
+    void removeWithOneChild(Node* node, Node* child);
+    void removeWithTwoChildren(Node* node);
 
-    Node* findLeaf(T value, int (*cmp)(const T&, const T&)) {
-        Node* curr = root;
-        Node* prev;
-        int depth = 0;
+    Node* findPredecessor(Node* node);
 
-        while (curr) {
-            prev = curr;
-            if (cmp(value, curr->val) > 0) {
-                curr = curr->right;
-            } else {
-                curr = curr->left;
-            }
-            depth++;
-        }
+    void preorderHelper(Node* node, std::vector<T> &pre);
+    void inorderHelper(Node* node, std::vector<T> &in);
 
-        if (ifHeightUpdated && treeHeight < depth) treeHeight = depth; 
-        return prev;
-    }
-
-    Node* findHelper(Node* curr, T value, int (*cmp)(const T&, const T&)) {
-        if (curr == nullptr) return nullptr;
-        int compare = cmp(curr->val, value);
-        if (compare == 0) return curr;
-        if (compare > 0) return findHelper(curr->left, value, cmp);
-        return findHelper(curr->right, value, cmp);
-    }
-
-    void removeNode(Node* node) {
-        if (node->left == nullptr && node->right == nullptr) {
-            removeWithNoChildren(node);
-        } else if (node->right == nullptr) {
-            removeWithOneChild(node, node->left);
-        } else if (node->left == nullptr) {
-            removeWithOneChild(node, node->right);
-        } else {
-            removeWithTwoChildren(node);
-        }
-    }
-
-    void removeWithNoChildren(Node* node) {
-        if (node->parent == nullptr) {
-            root = nullptr;
-        } else if (node->parent->left == node) {
-            node->parent->left = nullptr;
-        } else {
-            node->parent->right = nullptr;
-        }
-        delete node;
-    }
-
-    void removeWithOneChild(Node* node, Node* child) {
-        if (node->parent == nullptr) {
-            root = child;
-            child->parent = nullptr;
-        } else if (node->parent->left == node) {
-            node->parent->left = child;
-            child->parent = node->parent;
-        } else {
-            node->parent->right = child;
-            child->parent = node->parent;
-        }
-        delete node;
-    }
-
-    void removeWithTwoChildren(Node* node) {
-        Node* neighbor = findNeighbor(node->left);
-
-        Node* child = neighbor->left;
-
-        if (neighbor->parent->right == neighbor) {
-            neighbor->parent->right = child;
-        } else if (neighbor->parent->left == neighbor) {
-            neighbor->parent->left = child;
-        }
-        if (child) child->parent = neighbor->parent;
-
-        neighbor->parent = node->parent;
-        neighbor->left = node->left;
-        neighbor->right = node->right;
-
-        if (node->left) node->left->parent = neighbor;
-        if (node->right) node->right->parent = neighbor;
-
-        if (node->parent == nullptr) {
-            root = neighbor;
-        } else if (node->parent->left == node) {
-            node->parent->left = neighbor;
-        } else {
-            node->parent->right = neighbor;
-        }
-
-        delete node;
-    }
-
-    Node* findNeighbor(Node* node) {
-        while (node->right != nullptr) node = node->right;
-        return node;
-    }
-
-    void preorderHelper(Node* node, std::vector<T> &pre) {
-        if (!node) return;
-        pre.push_back(node->val);
-        preorderHelper(node->left, pre);
-        preorderHelper(node->right, pre);
-    }
-
-    void inorderHelper(Node* node, std::vector<T> &in) {
-        if (!node) return;
-        inorderHelper(node->left, in);
-        in.push_back(node->val);
-        inorderHelper(node->right, in);
-    }
-
-    void clearHelper(Node* node) {
-        if (!node) return;
-        clearHelper(node->left);
-        clearHelper(node->right);
-        delete node;
-    }
+    void clearHelper(Node* node);
 
     void addToGraph(
         Node* curr, int col, int row, int size,
@@ -286,44 +76,7 @@ private:
         std::vector<std::vector<std::string>> &treeGraph,
         std::string (*toStringObj)(const T&),
         bool ifColor, bool ifParent
-        ) {
-        int newSize = size / 2;
-
-        std::string parent = "";
-        if (ifParent) {
-            parent = (ifColor ? red("P:(Null)") : "P:(Null)");
-            if (curr->parent) parent = (ifColor ? red("P:(" + toStringObj(curr->parent->val) + ")")
-                                                : "P:(" + toStringObj(curr->parent->val) + ")");
-        }
-        treeGraph[col][row] = prefix + (ifColor ? green("N:(" + toStringObj(curr->val) + ")") 
-                                                : "N:(" + toStringObj(curr->val) + ")") + parent;
-
-        treeGraph[col + 1][row] = "\n";
-
-        if (curr->right) {
-            for (int i = 1; i < newSize + 1; i++) {
-                treeGraph[col + 1][row - i] = (ifColor ? yellow("|") : ("|")) + std::string(printWidth - 1, ' ');
-            }
-            addToGraph(curr->right, col + 1, row - (newSize + 1), newSize,
-                       ifColor ? yellow("R" + std::string(printWidth - 1, '-'))
-                               : "R" + std::string(printWidth - 1, '-'),
-                       treeGraph,
-                       toStringObj,
-                       ifColor, ifParent);
-        };
-
-        if (curr->left) {
-            for (int i = 1; i < newSize + 1; i++) {
-                treeGraph[col + 1][row + i] = (ifColor ? blue("|") : ("|")) + std::string(printWidth - 1, ' ');
-            }
-            addToGraph(curr->left, col + 1, row + (newSize + 1), newSize,
-                       ifColor ? blue("L" + std::string(printWidth - 1, '-'))
-                               : "L" + std::string(printWidth - 1, '-'),
-                       treeGraph,
-                       toStringObj,
-                       ifColor, ifParent);
-        };
-    }
+        );
 
     std::string yellow(std::string text) {
         return "\033[33m" + text + "\033[0m";
@@ -358,7 +111,7 @@ std::string toStringObj(const SomeObject& obj);
 std::string getColumn(std::string value, int width, char filling, char last);
 void printSeparator(int numOfMethods,int width);
 
-void fillBst(int elements, BST <SomeObject>* bst);
+void fillBST(int elements, BST <SomeObject>* bst);
 
 template <typename Func>
 std::string measureMethod(Func func, BST <SomeObject>* bst, int elements, bool requiresFill, int width, bool multiRun);
@@ -388,9 +141,9 @@ int main() {
     TestArguments testMethods[] = {
         {true, "add()", [bst]() { bst->add(createRandom(), compare); }, false, true},
         {true, "find()", [bst]() { bst->find(createRandom(), compare); }, true, true},
-        {true, "remove()", [bst]() { bst->find(createRandom(), compare); }, true, true},
+        {true, "remove()", [bst]() { bst->remove(createRandom(), compare); }, true, true},
         {true, "preorder()", [bst]() { bst->preorder(); }, true, false},
-        {true, "inorder()", [bst]() { bst->preorder(); }, true, false},
+        {true, "inorder()", [bst]() { bst->inorder(); }, true, false},
         {true, "clear()", [bst]() { bst->clear(); }, true, false}
     };
 
@@ -427,8 +180,324 @@ int main() {
     delete bst;
 }
 
+template <typename T>
+int BST<T>::height() {
+    if (!ifHeightUpdated) {
+        treeHeight = updateHeight(root);
+        ifHeightUpdated = true;
+    }
+    return treeHeight;
+}
+
+template <typename T>
+int BST<T>::add(T value, int (*cmp)(const T&, const T&)) {
+    Node* newNode = createNewNode(value);
+    if (newNode == nullptr) return FAIL;
+
+    if (root == nullptr) {
+        root = newNode;
+        treeHeight++;
+    } else {
+        Node* leaf = findLeaf(value, cmp);
+
+        if (cmp(value, leaf->val) > 0) {
+            leaf->right = newNode;
+        } else {
+            leaf->left = newNode;
+        }
+
+        newNode->parent = leaf;
+    }
+    treeSize++;
+    ifHeightUpdated = false;
+    return SUCCESS;
+};
+
+template <typename T>
+typename BST<T>::Node* BST<T>::find(T value, int (*cmp)(const T&, const T&)) {
+    return findHelper(root, value, cmp);
+}
+
+template <typename T>
+int BST<T>::remove(T value, int (*cmp)(const T&, const T&)) {
+    Node* node = find(value, cmp);
+    if (node == nullptr) return FAIL;
+    removeNode(node);
+    treeSize--;
+    ifHeightUpdated = false;
+    return SUCCESS;
+}
+
+template <typename T>
+std::vector<T> BST<T>::preorder() {
+    std::vector<T> pre;
+    preorderHelper(root, pre);
+    return pre;
+}
 
 
+template <typename T>
+std::vector<T> BST<T>::inorder() {
+    std::vector<T> in;
+    inorderHelper(root, in);
+    return in;
+}
+
+template <typename T>
+void BST<T>::clear() {
+    clearHelper(root);
+    root = nullptr;
+    treeSize = 0;
+    treeHeight = -1;
+    ifHeightUpdated = true;
+}
+
+template <typename T>
+std::string BST<T>::toString(std::string (*toStringObj)(const T&), bool ifColor, bool ifParent) {
+    if (!root) return "";
+
+    // Update height if needed
+    if (!ifHeightUpdated) {
+        treeHeight = updateHeight(root);
+        ifHeightUpdated = true;
+    }
+
+    // Rows = every level double the size of rows
+    int rows = (1 << (treeHeight + 1)) - 1; // pow(2, (treeHeight + 1)) - 1
+    int cols = treeHeight + 2;
+
+    std::vector<std::vector<std::string>> treeGraph(cols, std::vector<std::string>(rows, std::string(printWidth, ' ')));
+
+    // Recursively fill treeGraph with node strings
+    addToGraph(root, 0, rows / 2, rows / 2,
+                ifColor ? red("Root" + std::string(printWidth - 4, '-'))
+                        : "Root" + std::string(printWidth - 4, '-'),
+                treeGraph,
+                toStringObj,
+                ifColor, ifParent);
+
+    std::string result;
+    std::string row;
+    
+    // Convert 2D graph to single string, skip lines without nodes (ended with "\n");
+    for (int i = 0; i < rows; i++) {
+        row = "";
+        for (int j = 0; j < cols; j++) {
+            row += treeGraph[j][i];
+            if (treeGraph[j][i] == "\n") {
+                result += row;
+                break;
+            }
+        }
+    }
+
+    return result;
+}
+
+template <typename T>
+int BST<T>::updateHeight(Node* curr) {
+    if (!curr) return -1;
+    return std::max(updateHeight(curr->left) + 1, updateHeight(curr->right) + 1);
+}
+
+template <typename T>
+typename BST<T>::Node* BST<T>::createNewNode(T newNodeVal) {
+    try {
+        return new Node(newNodeVal);
+    }
+    catch (const std::bad_alloc&) {
+        return nullptr;
+    }
+}
+
+template <typename T>
+typename BST<T>::Node* BST<T>::findLeaf(T value, int (*cmp)(const T&, const T&)) {
+    Node* curr = root;
+    Node* prev;
+
+    while (curr) {
+        prev = curr;
+        if (cmp(value, curr->val) > 0) {
+            curr = curr->right;
+        } else {
+            curr = curr->left;
+        }
+    }
+
+    return prev;
+}
+
+template <typename T>
+typename BST<T>::Node* BST<T>::findHelper(Node* curr, T value, int (*cmp)(const T&, const T&)) {
+    if (curr == nullptr) return nullptr;
+    int compare = cmp(curr->val, value);
+    if (compare == 0) return curr;
+    if (compare > 0) return findHelper(curr->left, value, cmp);
+    return findHelper(curr->right, value, cmp);
+}
+
+template <typename T>
+void BST<T>::removeNode(Node* node) {
+    if (node->left == nullptr && node->right == nullptr) {
+        removeWithNoChildren(node);
+    } else if (node->right == nullptr) {
+        removeWithOneChild(node, node->left);
+    } else if (node->left == nullptr) {
+        removeWithOneChild(node, node->right);
+    } else {
+        removeWithTwoChildren(node);
+    }
+}
+
+template <typename T>
+void BST<T>::removeWithNoChildren(Node* node) {
+    // Node is root
+    if (node->parent == nullptr) {
+        root = nullptr;
+    // Node is left child of its parent
+    } else if (node->parent->left == node) {
+        node->parent->left = nullptr;
+    // Node is right child of its parent
+    } else {
+        node->parent->right = nullptr;
+    }
+    delete node;
+}
+
+template <typename T>
+void BST<T>::removeWithOneChild(Node* node, Node* child) {
+    // Node is root
+    if (node->parent == nullptr) {
+        root = child;
+        child->parent = nullptr;
+    // Node is left child of its parent
+    } else if (node->parent->left == node) {
+        node->parent->left = child;
+        child->parent = node->parent;
+    // Node is right child of its parent
+    } else {
+        node->parent->right = child;
+        child->parent = node->parent;
+    }
+    delete node;
+}
+
+template <typename T>
+void BST<T>::removeWithTwoChildren(Node* node) {
+    Node* predecessor = findPredecessor(node->left);
+
+    Node* child = predecessor->left;
+    // Connect predecessor's parent to its left child (it is guaranteed that predecessor has no right child)
+    if (predecessor->parent->right == predecessor) {
+        predecessor->parent->right = child;
+    } else if (predecessor->parent->left == predecessor) {
+        predecessor->parent->left = child;
+    }
+    // Connect predecessor's child (if it exist) to predecessor's parent
+    if (child) child->parent = predecessor->parent;
+
+    // Copy node's connections to predecessor
+    predecessor->parent = node->parent;
+    predecessor->left = node->left;
+    predecessor->right = node->right;
+
+    // Connect node's childrent to predecessor
+    if (node->left) node->left->parent = predecessor;
+    if (node->right) node->right->parent = predecessor;
+
+    // Connect node's parent to predecessor
+    if (node->parent == nullptr) {
+        root = predecessor;
+    } else if (node->parent->left == node) {
+        node->parent->left = predecessor;
+    } else {
+        node->parent->right = predecessor;
+    }
+
+    delete node;
+}
+
+template <typename T>
+typename BST<T>::Node* BST<T>::findPredecessor(Node* node) {
+    while (node->right != nullptr) node = node->right;
+    return node;
+}
+
+template <typename T>
+void BST<T>::preorderHelper(Node* node, std::vector<T> &pre) {
+    if (!node) return;
+    pre.push_back(node->val);
+    preorderHelper(node->left, pre);
+    preorderHelper(node->right, pre);
+}
+
+template <typename T>
+void BST<T>::inorderHelper(Node* node, std::vector<T> &in) {
+    if (!node) return;
+    inorderHelper(node->left, in);
+    in.push_back(node->val);
+    inorderHelper(node->right, in);
+}
+
+template <typename T>
+void BST<T>::clearHelper(Node* node) {
+    if (!node) return;
+    clearHelper(node->left);
+    clearHelper(node->right);
+    delete node;
+}
+
+template <typename T>
+void BST<T>::addToGraph(
+    Node* curr, int col, int row, int size,
+    std::string prefix,
+    std::vector<std::vector<std::string>> &treeGraph,
+    std::string (*toStringObj)(const T&),
+    bool ifColor, bool ifParent
+    ) {
+    int newSize = size / 2;
+
+    // Prepare parent string if needed
+    std::string parent = "";
+    if (ifParent) {
+        parent = (ifColor ? red("P:(Null)") : "P:(Null)");
+        if (curr->parent) parent = (ifColor ? red("P:(" + toStringObj(curr->parent->val) + ")")
+                                            : "P:(" + toStringObj(curr->parent->val) + ")");
+    }
+
+    // Fill current node position
+    treeGraph[col][row] = prefix + (ifColor ? green("N:(" + toStringObj(curr->val) + ")") 
+                                            : "N:(" + toStringObj(curr->val) + ")") + parent;
+
+    // Add line break
+    treeGraph[col + 1][row] = "\n";
+
+    // Add right child if exists
+    if (curr->right) {
+        for (int i = 1; i < newSize + 1; i++) {
+            treeGraph[col + 1][row - i] = (ifColor ? yellow("|") : ("|")) + std::string(printWidth - 1, ' ');
+        }
+        addToGraph(curr->right, col + 1, row - (newSize + 1), newSize,
+                    ifColor ? yellow("R" + std::string(printWidth - 1, '-'))
+                            : "R" + std::string(printWidth - 1, '-'),
+                    treeGraph,
+                    toStringObj,
+                    ifColor, ifParent);
+    };
+
+    // Add left child if exists
+    if (curr->left) {
+        for (int i = 1; i < newSize + 1; i++) {
+            treeGraph[col + 1][row + i] = (ifColor ? blue("|") : ("|")) + std::string(printWidth - 1, ' ');
+        }
+        addToGraph(curr->left, col + 1, row + (newSize + 1), newSize,
+                    ifColor ? blue("L" + std::string(printWidth - 1, '-'))
+                            : "L" + std::string(printWidth - 1, '-'),
+                    treeGraph,
+                    toStringObj,
+                    ifColor, ifParent);
+    };
+}
 
 SomeObject createRandom() {
     return { rand() % 1000000, (char)('a' + rand() % 26) };
@@ -790,7 +859,7 @@ void assertTests(BST <SomeObject>* bst) {
     "      L-----N:(0, a)P:(3, d)\n";
     assert(bst->toString(toStringObj, false, true) == print);
 
-    // ---- Test preorder(), inorder() methods ----
+    // ---- Test clear() methods ----
     bst->clear();
     assert(bst->size() == 0);
     assert(bst->height() == -1);
