@@ -25,14 +25,20 @@ struct BST {
             val = newVal;
         }
     };
+
     Node* root;
 
     BST() { root = nullptr; }
-    ~BST() {
-        clear();
-    }
+    ~BST() { clear(); }
 
     int size() const { return treeSize; }
+    int height() {
+        if (!ifHeightUpdated) {
+            treeHeight = updateHeight(root);
+            ifHeightUpdated = true;
+        }
+        return treeHeight;
+    }
 
     int add(T value, int (*cmp)(const T&, const T&)) {
         Node* newNode = createNewNode(value);
@@ -78,12 +84,6 @@ struct BST {
         return pre;
     }
 
-    void preorderHelper(Node* node, std::vector<T> &pre) {
-        if (!node) return;
-        pre.push_back(node->val);
-        preorderHelper(node->left, pre);
-        preorderHelper(node->right, pre);
-    }
 
     std::vector<T> inorder() {
         std::vector<T> in;
@@ -91,12 +91,6 @@ struct BST {
         return in;
     }
 
-    void inorderHelper(Node* node, std::vector<T> &in) {
-        if (!node) return;
-        inorderHelper(node->left, in);
-        in.push_back(node->val);
-        inorderHelper(node->right, in);
-    }
 
     void clear() {
         clearHelper(root);
@@ -106,22 +100,9 @@ struct BST {
         ifHeightUpdated = true;
     }
 
-    void clearHelper(Node* node) {
-        if (!node) return;
-        clearHelper(node->left);
-        clearHelper(node->right);
-        delete node;
-    }
+    std::string toString(std::string (*toStringObj)(const T&), bool ifColor, bool ifParent) {
+        if (!root) return "";
 
-    int height() {
-        if (!ifHeightUpdated) {
-            treeHeight = updateHeight(root);
-            ifHeightUpdated = true;
-        }
-        return treeHeight;
-    }
-
-    std::string toString(std::string (*toStringObj)(const T&)) {
         if (!ifHeightUpdated) {
             treeHeight = updateHeight(root);
             ifHeightUpdated = true;
@@ -134,9 +115,11 @@ struct BST {
         std::vector<std::vector<std::string>> treeGraph(cols, std::vector<std::string>(rows, std::string(printWidth, ' ')));
 
         addToGraph(root, 0, rows / 2, rows / 2,
-                   red("Root" + std::string(printWidth - 4, '-')),
+                   ifColor ? red("Root" + std::string(printWidth - 4, '-'))
+                           : "Root" + std::string(printWidth - 4, '-'),
                    treeGraph,
-                   toStringObj);
+                   toStringObj,
+                   ifColor, ifParent);
 
         std::string result;
         std::string row;
@@ -162,6 +145,11 @@ private:
 
     const int printWidth = 6;
     enum Status { SUCCESS = 0, FAIL = 1 };
+
+    int updateHeight(Node* curr) {
+        if (!curr) return -1;
+        return std::max(updateHeight(curr->left) + 1, updateHeight(curr->right) + 1);
+    }
 
     Node* createNewNode(T newNodeVal) {
         try {
@@ -271,69 +259,69 @@ private:
         return node;
     }
 
-    // void swap(Node* node, Node* neighbor) {
-    //     Node* child = neighbor->left;
+    void preorderHelper(Node* node, std::vector<T> &pre) {
+        if (!node) return;
+        pre.push_back(node->val);
+        preorderHelper(node->left, pre);
+        preorderHelper(node->right, pre);
+    }
 
-    //     if (neighbor->parent->right == neighbor) {
-    //         neighbor->parent->right = child;
-    //     } else if (neighbor->parent->left == neighbor) {
-    //         neighbor->parent->left = child;
-    //     }
-    //     if (child) child->parent = neighbor->parent;
+    void inorderHelper(Node* node, std::vector<T> &in) {
+        if (!node) return;
+        inorderHelper(node->left, in);
+        in.push_back(node->val);
+        inorderHelper(node->right, in);
+    }
 
-    //     neighbor->parent = node->parent;
-    //     neighbor->left = node->left;
-    //     neighbor->right = node->right;
-
-    //     if (node->left) node->left->parent = neighbor;
-    //     if (node->right) node->right->parent = neighbor;
-
-    //     if (node->parent == nullptr) {
-    //         root = neighbor;
-    //     } else if (node->parent->left == node) {
-    //         node->parent->left = neighbor;
-    //     } else {
-    //         node->parent->right = neighbor;
-    //     }
-
-    //     delete node;
-    // }
-
-    int updateHeight(Node* curr) {
-        if (!curr) return -1;
-        return std::max(updateHeight(curr->left) + 1, updateHeight(curr->right) + 1);
+    void clearHelper(Node* node) {
+        if (!node) return;
+        clearHelper(node->left);
+        clearHelper(node->right);
+        delete node;
     }
 
     void addToGraph(
         Node* curr, int col, int row, int size,
         std::string prefix,
         std::vector<std::vector<std::string>> &treeGraph,
-        std::string (*toStringObj)(const T&)
+        std::string (*toStringObj)(const T&),
+        bool ifColor, bool ifParent
         ) {
         int newSize = size / 2;
-        std::string parent = red("P:(Null)");
-        if (curr->parent) parent = red("P:(" + toStringObj(curr->parent->val) + ")");
-        treeGraph[col][row] = prefix + green("N:(" + toStringObj(curr->val) + ")") + parent;
+
+        std::string parent = "";
+        if (ifParent) {
+            parent = (ifColor ? red("P:(Null)") : "P:(Null)");
+            if (curr->parent) parent = (ifColor ? red("P:(" + toStringObj(curr->parent->val) + ")")
+                                                : "P:(" + toStringObj(curr->parent->val) + ")");
+        }
+        treeGraph[col][row] = prefix + (ifColor ? green("N:(" + toStringObj(curr->val) + ")") 
+                                                : "N:(" + toStringObj(curr->val) + ")") + parent;
+
         treeGraph[col + 1][row] = "\n";
 
         if (curr->right) {
             for (int i = 1; i < newSize + 1; i++) {
-                treeGraph[col + 1][row - i] = yellow("|") + std::string(printWidth - 1, ' ');
+                treeGraph[col + 1][row - i] = (ifColor ? yellow("|") : ("|")) + std::string(printWidth - 1, ' ');
             }
             addToGraph(curr->right, col + 1, row - (newSize + 1), newSize,
-                       yellow("R" + std::string(printWidth - 1, '-')),
+                       ifColor ? yellow("R" + std::string(printWidth - 1, '-'))
+                               : "R" + std::string(printWidth - 1, '-'),
                        treeGraph,
-                       toStringObj);
+                       toStringObj,
+                       ifColor, ifParent);
         };
 
         if (curr->left) {
             for (int i = 1; i < newSize + 1; i++) {
-                treeGraph[col + 1][row + i] = blue("|") + std::string(printWidth - 1, ' ');
+                treeGraph[col + 1][row + i] = (ifColor ? blue("|") : ("|")) + std::string(printWidth - 1, ' ');
             }
             addToGraph(curr->left, col + 1, row + (newSize + 1), newSize,
-                       blue("L" + std::string(printWidth - 1, '-')),
+                       ifColor ? blue("L" + std::string(printWidth - 1, '-'))
+                               : "L" + std::string(printWidth - 1, '-'),
                        treeGraph,
-                       toStringObj);
+                       toStringObj,
+                       ifColor, ifParent);
         };
     }
 
@@ -356,6 +344,10 @@ private:
 struct SomeObject {
     int field_1;
     char field_2;
+
+    bool operator==(const SomeObject& other) const {
+        return field_1 == other.field_1 && field_2 == other.field_2;
+    }
 };
 
 SomeObject createRandom();
@@ -366,10 +358,10 @@ std::string toStringObj(const SomeObject& obj);
 std::string getColumn(std::string value, int width, char filling, char last);
 void printSeparator(int numOfMethods,int width);
 
-void fillArray(int elements, BST <SomeObject>* da);
+void fillBst(int elements, BST <SomeObject>* bst);
 
 template <typename Func>
-std::string measureMethod(Func func, BST <SomeObject>* da, int elements, bool requiresFill, int width, bool multiRun);
+std::string measureMethod(Func func, BST <SomeObject>* bst, int elements, bool requiresFill, int width, bool multiRun);
 
 void assertTests(BST <SomeObject>* da);
 
@@ -377,60 +369,66 @@ int main() {
     srand(time(0));
     BST <SomeObject>* bst = new BST <SomeObject>();
 
-    
-    
     // Small correctness check
     assertTests(bst);
 
-    // // Maximum order: 9 (int overflow)
-    // int maxOrder = 5;
-    // int columnWidth = 11;
+    // Maximum order: 9 (int overflow)
+    int maxOrder = 7;
+    int columnWidth = 11;
 
-    // struct TestArguments {
-    //     bool enabled;
-    //     std::string name;
-    //     std::function<void()> body;
-    //     bool requiresFill;
-    //     bool multiRun;
-    // };
+    struct TestArguments {
+        bool enabled;
+        std::string name;
+        std::function<void()> body;
+        bool requiresFill;
+        bool multiRun;
+    };
 
-    // // Change first value (enabled) to reduce number of tests
-    // TestArguments testMethods[] = {
-    //     {true, "add()", [da]() { da->add(createRandom(), compare); }, false, true},
-    // };
+    // Change first value (enabled) to reduce number of tests
+    TestArguments testMethods[] = {
+        {true, "add()", [bst]() { bst->add(createRandom(), compare); }, false, true},
+        {true, "find()", [bst]() { bst->find(createRandom(), compare); }, true, true},
+        {true, "remove()", [bst]() { bst->find(createRandom(), compare); }, true, true},
+        {true, "preorder()", [bst]() { bst->preorder(); }, true, false},
+        {true, "inorder()", [bst]() { bst->preorder(); }, true, false},
+        {true, "clear()", [bst]() { bst->clear(); }, true, false}
+    };
 
-    // int countMethodsToPrint = 0;
-    // for (const TestArguments& testMethod : testMethods) {
-    //     if (testMethod.enabled) countMethodsToPrint++;
-    // }
+    int countMethodsToPrint = 0;
+    for (const TestArguments& testMethod : testMethods) {
+        if (testMethod.enabled) countMethodsToPrint++;
+    }
 
-    // printSeparator(countMethodsToPrint, columnWidth);
-    // std::cout << "|" << getColumn("elements", columnWidth, ' ', '|');
-    // for (const TestArguments& testMethod : testMethods) {
-    //     if (testMethod.enabled) std::cout << getColumn(testMethod.name, columnWidth, ' ', '|');
-    // }
-    // std::cout << std::endl;
-    // printSeparator(countMethodsToPrint, columnWidth);
+    printSeparator(countMethodsToPrint, columnWidth);
+    std::cout << "|" << getColumn("elements", columnWidth, ' ', '|');
+    for (const TestArguments& testMethod : testMethods) {
+        if (testMethod.enabled) std::cout << getColumn(testMethod.name, columnWidth, ' ', '|');
+    }
+    std::cout << std::endl;
+    printSeparator(countMethodsToPrint, columnWidth);
 
-    // // performance tests
-    // for (int o = 1; o <= maxOrder; o++) {
-    //     int elements = pow(10, o);
-    //     std::cout << "|" << getColumn(std::to_string(elements), columnWidth, ' ', '|');
-    //     for (const TestArguments& testMethod : testMethods) {
-    //         if (testMethod.enabled) {
-    //             std::cout <<
-    //             measureMethod(testMethod.body, da, elements,
-    //                           testMethod.requiresFill, columnWidth,
-    //                           testMethod.multiRun)
-    //             << std::flush;
-    //         }
-    //     }
-    //     std::cout << std::endl;
-    // }
-    // printSeparator(countMethodsToPrint, columnWidth);
+    // performance tests
+    for (int o = 1; o <= maxOrder; o++) {
+        int elements = pow(10, o);
+        std::cout << "|" << getColumn(std::to_string(elements), columnWidth, ' ', '|');
+        for (const TestArguments& testMethod : testMethods) {
+            if (testMethod.enabled) {
+                std::cout <<
+                measureMethod(testMethod.body, bst, elements,
+                              testMethod.requiresFill, columnWidth,
+                              testMethod.multiRun)
+                << std::flush;
+            }
+        }
+        std::cout << std::endl;
+    }
+    printSeparator(countMethodsToPrint, columnWidth);
 
     delete bst;
 }
+
+
+
 
 SomeObject createRandom() {
     return { rand() % 1000000, (char)('a' + rand() % 26) };
@@ -439,6 +437,8 @@ SomeObject createRandom() {
 int compare(const SomeObject& new_obj, const SomeObject& list_obj) {
     if (new_obj.field_1 > list_obj.field_1) return 1;
     if (new_obj.field_1 < list_obj.field_1) return -1;
+    if (new_obj.field_2 > list_obj.field_2) return 1;
+    if (new_obj.field_2 < list_obj.field_2) return -1;
     return 0;
 }
 
@@ -461,27 +461,33 @@ void printSeparator(int numOfMethods,int width) {
     std::cout << std::endl;
 }
 
-// template <typename Func>
-// std::string measureMethod(Func func, BST <SomeObject>* da, int elements, bool requiresFill, int width, bool multiRun) {
-//     if (requiresFill) fillVector(elements, dv);
+void fillBST(int elements, BST <SomeObject>* bst) {
+    for (int i = 0; i < elements; i++) {
+        bst->add(createRandom(), compare);
+    }
+}
 
-//     clock_t t1 = clock();
-//     if (multiRun) {
-//         for (int i = 0; i < elements; i++) {
-//             func();
-//         }
-//     } else {
-//         func();
-//     }
-//     clock_t t2 = clock();
+template <typename Func>
+std::string measureMethod(Func func, BST <SomeObject>* bst, int elements, bool requiresFill, int width, bool multiRun) {
+    if (requiresFill) fillBST(elements, bst);
 
-//     da->clear();
+    clock_t t1 = clock();
+    if (multiRun) {
+        for (int i = 0; i < elements; i++) {
+            func();
+        }
+    } else {
+        func();
+    }
+    clock_t t2 = clock();
 
-//     double currTime = (t2 - t1) / (double)CLOCKS_PER_SEC;
-//     std:: string strTime = std::to_string(currTime);
-//     strTime.erase(strTime.size() - 3);
-//     return getColumn(strTime + 's', width, ' ', '|');
-// }
+    bst->clear();
+
+    double currTime = (t2 - t1) / (double)CLOCKS_PER_SEC;
+    std:: string strTime = std::to_string(currTime);
+    strTime.erase(strTime.size() - 3);
+    return getColumn(strTime + 's', width, ' ', '|');
+}
 
 void assertTests(BST <SomeObject>* bst) {
     SomeObject s0 = { 0, 'a' };
@@ -496,6 +502,8 @@ void assertTests(BST <SomeObject>* bst) {
     SomeObject s9 = { 9, 'j' };
     SomeObject s10 = { 10, 'k' };
     SomeObject s11 = { 11, 'i' };
+
+    std::string print;
     
     // for (int i = 0; i < 20; i++) {
     //     bst->add(createRandom(), compare);
@@ -508,10 +516,18 @@ void assertTests(BST <SomeObject>* bst) {
     assert(bst->size() == 0);
     assert(bst->height() == -1);
 
+    print =
+    "";
+    assert(bst->toString(toStringObj, false, true) == print);
+
     bst->add(s5, compare);
     assert(bst->root->val.field_1 == 5);
     assert(bst->size() == 1);
     assert(bst->height() == 0);
+
+    print =
+    "Root--N:(5, f)P:(Null)\n";
+    assert(bst->toString(toStringObj, false, true) == print);
 
     bst->add(s3, compare);
     assert(bst->root->val.field_1 == 5);
@@ -519,12 +535,23 @@ void assertTests(BST <SomeObject>* bst) {
     assert(bst->size() == 2);
     assert(bst->height() == 1);
 
+    print = 
+    "Root--N:(5, f)P:(Null)\n"
+    "      L-----N:(3, d)P:(5, f)\n";
+    assert(bst->toString(toStringObj, false, true) == print);
+
     bst->add(s7, compare);
     assert(bst->root->val.field_1 == 5);
     assert(bst->root->left->val.field_1 == 3);
     assert(bst->root->right->val.field_1 == 7);
     assert(bst->size() == 3);
     assert(bst->height() == 1);
+
+    print = 
+    "      R-----N:(7, h)P:(5, f)\n"
+    "Root--N:(5, f)P:(Null)\n"
+    "      L-----N:(3, d)P:(5, f)\n";
+    assert(bst->toString(toStringObj, false, true) == print);
     
     bst->add(s1, compare);
     assert(bst->root->val.field_1 == 5);
@@ -533,6 +560,13 @@ void assertTests(BST <SomeObject>* bst) {
     assert(bst->root->left->left->val.field_1 == 1);
     assert(bst->size() == 4);
     assert(bst->height() == 2);
+
+    print =
+    "      R-----N:(7, h)P:(5, f)\n"
+    "Root--N:(5, f)P:(Null)\n"
+    "      L-----N:(3, d)P:(5, f)\n"
+    "            L-----N:(1, b)P:(3, d)\n";
+    assert(bst->toString(toStringObj, false, true) == print);
 
     bst->add(s4, compare);
     assert(bst->root->val.field_1 == 5);
@@ -543,35 +577,113 @@ void assertTests(BST <SomeObject>* bst) {
     assert(bst->size() == 5);
     assert(bst->height() == 2);
 
+    print =
+    "      R-----N:(7, h)P:(5, f)\n"
+    "Root--N:(5, f)P:(Null)\n"
+    "      |     R-----N:(4, e)P:(3, d)\n"
+    "      L-----N:(3, d)P:(5, f)\n"
+    "            L-----N:(1, b)P:(3, d)\n";
+    assert(bst->toString(toStringObj, false, true) == print);
+
+
     bst->add(s6, compare);
     assert(bst->root->right->left->val.field_1 == 6);
     assert(bst->size() == 6);
     assert(bst->height() == 2);
+
+    print =
+    "      R-----N:(7, h)P:(5, f)\n"
+    "      |     L-----N:(6, g)P:(7, h)\n"
+    "Root--N:(5, f)P:(Null)\n"
+    "      |     R-----N:(4, e)P:(3, d)\n"
+    "      L-----N:(3, d)P:(5, f)\n"
+    "            L-----N:(1, b)P:(3, d)\n";
+    assert(bst->toString(toStringObj, false, true) == print);
 
     bst->add(s9, compare);
     assert(bst->root->right->right->val.field_1 == 9);
     assert(bst->size() == 7);
     assert(bst->height() == 2);
 
+    print =
+    "            R-----N:(9, j)P:(7, h)\n"
+    "      R-----N:(7, h)P:(5, f)\n"
+    "      |     L-----N:(6, g)P:(7, h)\n"
+    "Root--N:(5, f)P:(Null)\n"
+    "      |     R-----N:(4, e)P:(3, d)\n"
+    "      L-----N:(3, d)P:(5, f)\n"
+    "            L-----N:(1, b)P:(3, d)\n";
+    assert(bst->toString(toStringObj, false, true) == print);
+
     bst->add(s0, compare);
     assert(bst->root->left->left->left->val.field_1 == 0);
     assert(bst->size() == 8);
     assert(bst->height() == 3);
+
+    print =
+    "            R-----N:(9, j)P:(7, h)\n"
+    "      R-----N:(7, h)P:(5, f)\n"
+    "      |     L-----N:(6, g)P:(7, h)\n"
+    "Root--N:(5, f)P:(Null)\n"
+    "      |     R-----N:(4, e)P:(3, d)\n"
+    "      L-----N:(3, d)P:(5, f)\n"
+    "            L-----N:(1, b)P:(3, d)\n"
+    "                  L-----N:(0, a)P:(1, b)\n";
+    assert(bst->toString(toStringObj, false, true) == print);
 
     bst->add(s2, compare);
     assert(bst->root->left->left->right->val.field_1 == 2);
     assert(bst->size() == 9);
     assert(bst->height() == 3);
 
+    print =
+    "            R-----N:(9, j)P:(7, h)\n"
+    "      R-----N:(7, h)P:(5, f)\n"
+    "      |     L-----N:(6, g)P:(7, h)\n"
+    "Root--N:(5, f)P:(Null)\n"
+    "      |     R-----N:(4, e)P:(3, d)\n"
+    "      L-----N:(3, d)P:(5, f)\n"
+    "            |     R-----N:(2, c)P:(1, b)\n"
+    "            L-----N:(1, b)P:(3, d)\n"
+    "                  L-----N:(0, a)P:(1, b)\n";
+    assert(bst->toString(toStringObj, false, true) == print);
+
     bst->add(s8, compare);
     assert(bst->root->right->right->left->val.field_1 == 8);
     assert(bst->size() == 10);
     assert(bst->height() == 3);
 
+    print =
+    "            R-----N:(9, j)P:(7, h)\n"
+    "            |     L-----N:(8, i)P:(9, j)\n"
+    "      R-----N:(7, h)P:(5, f)\n"
+    "      |     L-----N:(6, g)P:(7, h)\n"
+    "Root--N:(5, f)P:(Null)\n"
+    "      |     R-----N:(4, e)P:(3, d)\n"
+    "      L-----N:(3, d)P:(5, f)\n"
+    "            |     R-----N:(2, c)P:(1, b)\n"
+    "            L-----N:(1, b)P:(3, d)\n"
+    "                  L-----N:(0, a)P:(1, b)\n";
+    assert(bst->toString(toStringObj, false, true) == print);
+
     bst->add(s10, compare);
     assert(bst->root->right->right->right->val.field_1 == 10);
     assert(bst->size() == 11);
     assert(bst->height() == 3);
+
+    print =
+    "                  R-----N:(10, k)P:(9, j)\n"
+    "            R-----N:(9, j)P:(7, h)\n"
+    "            |     L-----N:(8, i)P:(9, j)\n"
+    "      R-----N:(7, h)P:(5, f)\n"
+    "      |     L-----N:(6, g)P:(7, h)\n"
+    "Root--N:(5, f)P:(Null)\n"
+    "      |     R-----N:(4, e)P:(3, d)\n"
+    "      L-----N:(3, d)P:(5, f)\n"
+    "            |     R-----N:(2, c)P:(1, b)\n"
+    "            L-----N:(1, b)P:(3, d)\n"
+    "                  L-----N:(0, a)P:(1, b)\n";
+    assert(bst->toString(toStringObj, false, true) == print);
 
     // ---- Test find() methods ----
     assert((bst->find(s1, compare))->val.field_1 == 1);
@@ -581,5 +693,106 @@ void assertTests(BST <SomeObject>* bst) {
     assert((bst->find(s9, compare))->val.field_1 == 9);
     assert((bst->find(s11, compare)) == nullptr);
 
-    std::cout << bst->toString(toStringObj) << std::endl;
+    // ---- Test preorder(), inorder() methods ----
+    std::vector<SomeObject> pre = bst->preorder();
+    std::vector<SomeObject> preTest = { s5, s3, s1, s0, s2, s4, s7, s6, s9, s8, s10 };
+    assert(pre == preTest);
+    
+    std::vector<SomeObject> in = bst->inorder();
+    std::vector<SomeObject> inTest = { s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10 };
+    assert(in == inTest);
+
+    // ---- Test remove() methods ----
+    bst->remove(s10, compare);
+    assert(bst->size() == 10);
+    assert(bst->height() == 3);
+
+    print =
+    "            R-----N:(9, j)P:(7, h)\n"
+    "            |     L-----N:(8, i)P:(9, j)\n"
+    "      R-----N:(7, h)P:(5, f)\n"
+    "      |     L-----N:(6, g)P:(7, h)\n"
+    "Root--N:(5, f)P:(Null)\n"
+    "      |     R-----N:(4, e)P:(3, d)\n"
+    "      L-----N:(3, d)P:(5, f)\n"
+    "            |     R-----N:(2, c)P:(1, b)\n"
+    "            L-----N:(1, b)P:(3, d)\n"
+    "                  L-----N:(0, a)P:(1, b)\n";
+    assert(bst->toString(toStringObj, false, true) == print);
+
+    bst->remove(s9, compare);
+    assert(bst->size() == 9);
+    assert(bst->height() == 3);
+
+    print =
+    "            R-----N:(8, i)P:(7, h)\n"
+    "      R-----N:(7, h)P:(5, f)\n"
+    "      |     L-----N:(6, g)P:(7, h)\n"
+    "Root--N:(5, f)P:(Null)\n"
+    "      |     R-----N:(4, e)P:(3, d)\n"
+    "      L-----N:(3, d)P:(5, f)\n"
+    "            |     R-----N:(2, c)P:(1, b)\n"
+    "            L-----N:(1, b)P:(3, d)\n"
+    "                  L-----N:(0, a)P:(1, b)\n";
+    assert(bst->toString(toStringObj, false, true) == print);
+
+    bst->remove(s7, compare);
+    assert(bst->size() == 8);
+    assert(bst->height() == 3);
+
+    print =
+    "            R-----N:(8, i)P:(6, g)\n"
+    "      R-----N:(6, g)P:(5, f)\n"
+    "Root--N:(5, f)P:(Null)\n"
+    "      |     R-----N:(4, e)P:(3, d)\n"
+    "      L-----N:(3, d)P:(5, f)\n"
+    "            |     R-----N:(2, c)P:(1, b)\n"
+    "            L-----N:(1, b)P:(3, d)\n"
+    "                  L-----N:(0, a)P:(1, b)\n";
+    assert(bst->toString(toStringObj, false, true) == print);
+
+    bst->remove(s5, compare);
+    assert(bst->size() == 7);
+    assert(bst->height() == 3);
+
+    print =
+    "            R-----N:(8, i)P:(6, g)\n"
+    "      R-----N:(6, g)P:(4, e)\n"
+    "Root--N:(4, e)P:(Null)\n"
+    "      L-----N:(3, d)P:(4, e)\n"
+    "            |     R-----N:(2, c)P:(1, b)\n"
+    "            L-----N:(1, b)P:(3, d)\n"
+    "                  L-----N:(0, a)P:(1, b)\n";
+    assert(bst->toString(toStringObj, false, true) == print);
+
+    bst->remove(s1, compare);
+    assert(bst->size() == 6);
+    assert(bst->height() == 3);
+
+    print =
+    "            R-----N:(8, i)P:(6, g)\n"
+    "      R-----N:(6, g)P:(4, e)\n"
+    "Root--N:(4, e)P:(Null)\n"
+    "      L-----N:(3, d)P:(4, e)\n"
+    "            |     R-----N:(2, c)P:(0, a)\n"
+    "            L-----N:(0, a)P:(3, d)\n";
+    assert(bst->toString(toStringObj, false, true) == print);
+
+    bst->remove(s4, compare);
+    assert(bst->size() == 5);
+    assert(bst->height() == 2);
+
+    print =
+    "            R-----N:(8, i)P:(6, g)\n"
+    "      R-----N:(6, g)P:(3, d)\n"
+    "Root--N:(3, d)P:(Null)\n"
+    "      |     R-----N:(2, c)P:(0, a)\n"
+    "      L-----N:(0, a)P:(3, d)\n";
+    assert(bst->toString(toStringObj, false, true) == print);
+
+    // ---- Test preorder(), inorder() methods ----
+    bst->clear();
+    assert(bst->size() == 0);
+    assert(bst->height() == -1);
+    assert(bst->root == nullptr);
 }
