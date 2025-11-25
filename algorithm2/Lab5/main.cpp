@@ -10,6 +10,16 @@
 
 #include "DynamicArray.h"
 
+// extern "C" int addTwo(int a, int b);
+// extern "C" int addThree(int a, int b, int c);
+
+extern "C" int maxHeapAdd(struct MaxHeap2 *heap, int val);
+extern "C" int DynamicArray_add(DynamicArray<int> *arr, int val) {
+    arr->add(val);
+    return 0;
+}
+
+
 template <typename T>
 struct MaxHeap {
     DynamicArray<T> array;
@@ -28,6 +38,11 @@ struct MaxHeap {
         return res;
     }
 
+    void clear() { array.clear(); };
+
+    std::string toString(std::string (*toStringObj)(const T&)) { return array.toString(toStringObj); };
+
+    private:
     void bubbleUp(int child, int (*cmp)(const T&, const T&)) {
         if (child == 0) return;
         int parent = getParent(child);
@@ -47,11 +62,8 @@ struct MaxHeap {
             greatest = leftChild;
         }
 
-        if (rightChild < array.size()) {
-            if (greatest == parent && cmp(array[rightChild], array[parent]) > 0 ||
-                greatest == leftChild && cmp(array[rightChild], array[leftChild]) > 0) {
-                greatest = rightChild;
-            }
+        if (rightChild < array.size() && cmp(array[rightChild], array[greatest]) > 0) {
+            greatest = rightChild;
         }
 
         if (greatest != parent) {
@@ -60,15 +72,21 @@ struct MaxHeap {
         }
     }
 
-    int getParent(int index) {
+    static int getParent(int index) {
         return (index - 1) / 2;
     }
 
-    int getChild(int index) {
+    static int getChild(int index) {
         return index * 2 + 1;
     }
+};
 
-    std::string toString(std::string (*toStringObj)(const T&)) { return array.toString(toStringObj); };
+struct MaxHeap2 {
+    DynamicArray<int> array;
+
+    void add(int val) {
+        maxHeapAdd(this, val);
+    };
 };
 
 struct SomeObject {
@@ -99,97 +117,57 @@ int main() {
     srand(time(0));
     MaxHeap<SomeObject> *maxHeap = new MaxHeap<SomeObject>();
 
-    DynamicArray<SomeObject> *dynamicArray = new DynamicArray<SomeObject>();
+    // Small correctness check
+    assertTests(maxHeap);
 
-    SomeObject s0 = { 0, 'a' };
-    SomeObject s1 = { 1, 'b' };
-    SomeObject s2 = { 2, 'c' };
-    SomeObject s3 = { 3, 'd' };
-    SomeObject s4 = { 4, 'e' };
-    SomeObject s5 = { 5, 'f' };
-    SomeObject s6 = { 6, 'g' };
-    SomeObject s7 = { 7, 'h' };
-    SomeObject s8 = { 8, 'i' };
-    SomeObject s9 = { 9, 'j' };
-    SomeObject s10 = { 10, 'k' };
-    SomeObject s11 = { 11, 'i' };
+    // Maximum order: 9 (int overflow)
+    int maxOrder = 8;
+    int columnWidth = 11;
 
-    maxHeap->add(s0, compare);
-    maxHeap->add(s3, compare);
-    maxHeap->add(s4, compare);
-    maxHeap->add(s11, compare);
-    maxHeap->add(s5, compare);
-    maxHeap->add(s5, compare);
+    struct TestArguments {
+        bool enabled;
+        std::string name;
+        std::function<void()> body;
+        bool requiresFill;
+        bool multiRun;
+    };
 
+    // Change first value (enabled) to reduce number of tests
+    TestArguments testMethods[] = {
+        {true, "add()", [maxHeap]() { maxHeap->add(createRandom(), compare); }, false, true},
+        {true, "pop()", [maxHeap]() { maxHeap->pop(compare); }, true, true},
+        {true, "clear()", [maxHeap]() { maxHeap->clear(); }, true, false}
+    };
 
-    std::cout << maxHeap->toString(toStringObj) << std::endl;
-    std::cout << toStringObj(maxHeap->pop(compare)) << std::endl;
-    std::cout << maxHeap->toString(toStringObj) << std::endl;
-    std::cout << toStringObj(maxHeap->pop(compare)) << std::endl;
-    std::cout << maxHeap->toString(toStringObj) << std::endl;
-    std::cout << toStringObj(maxHeap->pop(compare)) << std::endl;
-    std::cout << maxHeap->toString(toStringObj) << std::endl;
-    std::cout << toStringObj(maxHeap->pop(compare)) << std::endl;
-    std::cout << maxHeap->toString(toStringObj) << std::endl;
-    std::cout << toStringObj(maxHeap->pop(compare)) << std::endl;
-    std::cout << maxHeap->toString(toStringObj) << std::endl;
-    std::cout << toStringObj(maxHeap->pop(compare)) << std::endl;
-    std::cout << maxHeap->toString(toStringObj) << std::endl;
+    int countMethodsToPrint = 0;
+    for (const TestArguments& testMethod : testMethods) {
+        if (testMethod.enabled) countMethodsToPrint++;
+    }
 
-    // // Small correctness check
-    // assertTests(maxHeap);
+    printSeparator(countMethodsToPrint, columnWidth);
+    std::cout << "|" << getColumn("elements", columnWidth, ' ', '|');
+    for (const TestArguments& testMethod : testMethods) {
+        if (testMethod.enabled) std::cout << getColumn(testMethod.name, columnWidth, ' ', '|');
+    }
+    std::cout << std::endl;
+    printSeparator(countMethodsToPrint, columnWidth);
 
-    // // Maximum order: 9 (int overflow)
-    // int maxOrder = 7;
-    // int columnWidth = 11;
-
-    // struct TestArguments {
-    //     bool enabled;
-    //     std::string name;
-    //     std::function<void()> body;
-    //     bool requiresFill;
-    //     bool multiRun;
-    // };
-
-    // // Change first value (enabled) to reduce number of tests
-    // TestArguments testMethods[] = {
-    //     {true, "add()", [maxHeap]() { maxHeap->add(createRandom(), compare); }, false, true},
-    //     {true, "find()", [maxHeap]() { maxHeap->find(createRandom(), compare); }, true, true},
-    //     {true, "remove()", [maxHeap]() { maxHeap->remove(createRandom(), compare); }, true, true},
-    //     {true, "preorder()", [maxHeap]() { maxHeap->preorder(); }, true, false},
-    //     {true, "inorder()", [maxHeap]() { maxHeap->inorder(); }, true, false},
-    //     {true, "clear()", [maxHeap]() { maxHeap->clear(); }, true, false}
-    // };
-
-    // int countMethodsToPrint = 0;
-    // for (const TestArguments& testMethod : testMethods) {
-    //     if (testMethod.enabled) countMethodsToPrint++;
-    // }
-
-    // printSeparator(countMethodsToPrint, columnWidth);
-    // std::cout << "|" << getColumn("elements", columnWidth, ' ', '|');
-    // for (const TestArguments& testMethod : testMethods) {
-    //     if (testMethod.enabled) std::cout << getColumn(testMethod.name, columnWidth, ' ', '|');
-    // }
-    // std::cout << std::endl;
-    // printSeparator(countMethodsToPrint, columnWidth);
-
-    // // performance tests
-    // for (int o = 1; o <= maxOrder; o++) {
-    //     int elements = pow(10, o);
-    //     std::cout << "|" << getColumn(std::to_string(elements), columnWidth, ' ', '|');
-    //     for (const TestArguments& testMethod : testMethods) {
-    //         if (testMethod.enabled) {
-    //             std::cout <<
-    //             measureMethod(testMethod.body, maxHeap, elements,
-    //                           testMethod.requiresFill, columnWidth,
-    //                           testMethod.multiRun)
-    //             << std::flush;
-    //         }
-    //     }
-    //     std::cout << std::endl;
-    // }
-    // printSeparator(countMethodsToPrint, columnWidth);
+    // performance tests
+    for (int o = 1; o <= maxOrder; o++) {
+        int elements = pow(10, o);
+        std::cout << "|" << getColumn(std::to_string(elements), columnWidth, ' ', '|');
+        for (const TestArguments& testMethod : testMethods) {
+            if (testMethod.enabled) {
+                std::cout <<
+                measureMethod(testMethod.body, maxHeap, elements,
+                              testMethod.requiresFill, columnWidth,
+                              testMethod.multiRun)
+                << std::flush;
+            }
+        }
+        std::cout << std::endl;
+    }
+    printSeparator(countMethodsToPrint, columnWidth);
 
     delete maxHeap;
 }
@@ -225,15 +203,15 @@ void printSeparator(int numOfMethods,int width) {
     std::cout << std::endl;
 }
 
-// void fillBST(int elements, BST <SomeObject>* bst) {
-//     for (int i = 0; i < elements; i++) {
-//         bst->add(createRandom(), compare);
-//     }
-// }
+void fillHeap(int elements, MaxHeap <SomeObject>* maxHeap) {
+    for (int i = 0; i < elements; i++) {
+        maxHeap->add(createRandom(), compare);
+    }
+}
 
 template <typename Func>
 std::string measureMethod(Func func, MaxHeap <SomeObject>* maxHeap, int elements, bool requiresFill, int width, bool multiRun) {
-    if (requiresFill) fillBST(elements, maxHeap);
+    if (requiresFill) fillHeap(elements, maxHeap);
 
     clock_t t1 = clock();
     if (multiRun) {
@@ -254,5 +232,63 @@ std::string measureMethod(Func func, MaxHeap <SomeObject>* maxHeap, int elements
 }
 
 void assertTests(MaxHeap <SomeObject>* maxHeap) {
+    SomeObject s0 = { 0, 'a' };
+    SomeObject s1 = { 1, 'b' };
+    SomeObject s2 = { 2, 'c' };
+    SomeObject s3 = { 3, 'd' };
+    SomeObject s4 = { 4, 'e' };
+    SomeObject s5 = { 5, 'f' };
+    SomeObject s6 = { 6, 'g' };
+    SomeObject s7 = { 7, 'h' };
+    SomeObject s8 = { 8, 'i' };
+    SomeObject s9 = { 9, 'j' };
+    SomeObject s10 = { 10, 'k' };
+    SomeObject s11 = { 11, 'i' };
 
+    // std::cout << addTwo(1, 2) << std::endl;
+    // std::cout << addThree(1, 2, 3) << std::endl;
+
+    MaxHeap2 *maxHeap2 = new MaxHeap2();
+    maxHeap2->add(3);
+    maxHeap2->add(4);
+    maxHeap2->add(5);
+
+    std::cout << maxHeap2->array[0] << std::endl;
+    std::cout << maxHeap2->array[1] << std::endl;
+    std::cout << maxHeap2->array[2] << std::endl;
+
+    maxHeap->add(s0, compare);
+    maxHeap->add(s3, compare);
+    maxHeap->add(s4, compare);
+    maxHeap->add(s11, compare);
+    maxHeap->add(s5, compare);
+    maxHeap->add(s1, compare);
+    maxHeap->add(s2, compare);
+    maxHeap->add(s6, compare);
+    maxHeap->add(s10, compare);
+    maxHeap->add(s7, compare);
+    maxHeap->add(s9, compare);
+    maxHeap->add(s8, compare);
+
+    assert(maxHeap->pop(compare) == s11);
+    assert(maxHeap->pop(compare) == s10);
+    assert(maxHeap->pop(compare) == s9);
+    assert(maxHeap->pop(compare) == s8);
+    assert(maxHeap->pop(compare) == s7);
+    assert(maxHeap->pop(compare) == s6);
+    assert(maxHeap->pop(compare) == s5);
+    assert(maxHeap->pop(compare) == s4);
+    assert(maxHeap->pop(compare) == s3);
+    assert(maxHeap->pop(compare) == s2);
+    assert(maxHeap->pop(compare) == s1);
+    assert(maxHeap->pop(compare) == s0);
+
+    maxHeap->add(s11, compare);
+    maxHeap->add(s10, compare);
+
+    maxHeap->clear();
+
+    maxHeap->add(s1, compare);
+
+    assert(maxHeap->pop(compare) == s1);
 }
