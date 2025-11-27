@@ -104,6 +104,15 @@ struct MaxHeap2 {
     void bubbleUp(int child, int (*cmp)(const int, const int)) {
         maxHeapBubbleUp(this, child, cmp);
     }
+
+    // void bubbleUp(int child, int (*cmp)(int, int)) {
+    //     if (child == 0) return;
+    //     int parent = getParent(child);
+    //     if (cmp(array[child], array[parent]) > 0) {
+    //         array.swap(child, parent);
+    //         bubbleUp(parent, cmp);
+    //     }
+    // }
 };
 
 struct SomeObject {
@@ -266,25 +275,18 @@ void assertTests(MaxHeap <SomeObject>* maxHeap) {
 
     MaxHeap2 *maxHeap2 = new MaxHeap2();
     std::cout << maxHeap2->getParent(0) << std::endl;
-    maxHeap2->add(0, elementCompare);
-    std::cout <<"here0" << std::endl;
-    maxHeap2->add(1, elementCompare);
-    std::cout <<"here1" << std::endl;
     maxHeap2->add(2, elementCompare);
-    std::cout <<"here2" << std::endl;
-    maxHeap2->add(3, elementCompare);
-    std::cout <<"here3" << std::endl;
-    maxHeap2->add(4, elementCompare);
-    std::cout <<"here4" << std::endl;
-    maxHeap2->add(5, elementCompare);
-    std::cout <<"here5" << std::endl;
-
     std::cout << maxHeap2->array[0] << std::endl;
-    std::cout << maxHeap2->array[1] << std::endl;
-    std::cout << maxHeap2->array[2] << std::endl;
-    std::cout << maxHeap2->array[3] << std::endl;
-    std::cout << maxHeap2->array[4] << std::endl;
-    std::cout << maxHeap2->array[5] << std::endl;
+    maxHeap2->add(1, elementCompare);
+    std::cout << maxHeap2->array[0] << maxHeap2->array[1] << std::endl;
+    maxHeap2->add(8, elementCompare);
+    std::cout << maxHeap2->array[0] << maxHeap2->array[1] << maxHeap2->array[2] << std::endl;
+    maxHeap2->add(3, elementCompare);
+    std::cout << maxHeap2->array[0] << maxHeap2->array[1] << maxHeap2->array[2] << maxHeap2->array[3] << std::endl;
+    maxHeap2->add(4, elementCompare);
+    std::cout << maxHeap2->array[0] << maxHeap2->array[1] << maxHeap2->array[2] << maxHeap2->array[3] << maxHeap2->array[4] << std::endl;
+    maxHeap2->add(9, elementCompare);
+    std::cout << maxHeap2->array[0] << maxHeap2->array[1] << maxHeap2->array[2] << maxHeap2->array[3] << maxHeap2->array[4] << maxHeap2->array[5] << std::endl;
 
     maxHeap->add(s0, compare);
     maxHeap->add(s3, compare);

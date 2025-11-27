@@ -57,31 +57,32 @@ _maxHeapBubbleUp:
     mov ecx, eax           # save parent
 
     mov edx, [ebp + 8]     # this pointer
-    lea edx, [edx + 0]     # pointer to array
+    mov edx, [edx]         # array
 
     lea eax, [edx + ecx*4]   # get array[parent]
-    push eax               # push array[parent]
+    push dword ptr [eax]     # push array[parent] value
 
     mov eax, [ebp + 12]    # get child
     lea eax, [edx + eax*4]   # get array[child]
-    push eax               # push array[child]
+    push dword ptr [eax]     # push array[child] value
 
     call _elementCompare
     add esp, 8
 
     cmp eax, 0
-    jl finish
-    ; je finish
+    jle finish
 
-    push ecx
-    push [ebp + 12]
-    push edx
+    push ecx                # push parent
+    push [ebp + 12]         # push child
+    push [ebp + 8]                # push array pointer
 
     call _DynamicArray_swap
-    add esp, 12
+    add esp, 8
+
+    pop ecx                 # pop parent
 
     push [ebp + 16]         # pointer to cmp
-    push ecx         # push parent
+    push ecx          # push parent
     push [ebp + 8]          # push this pointer
 
     call _maxHeapBubbleUp
