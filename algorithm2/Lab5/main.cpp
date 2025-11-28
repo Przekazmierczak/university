@@ -1,4 +1,4 @@
-#include <iostream>
+                    #include <iostream>
 #include <string>
 #include <cstdlib>
 
@@ -274,7 +274,7 @@ void assertTests(MaxHeap <SomeObject>* maxHeap) {
     std::cout << maxHeap->getParent(0) << std::endl;
 
     MaxHeap2 *maxHeap2 = new MaxHeap2();
-    std::cout << maxHeap2->getParent(0) << std::endl;
+    std::cout << maxHeap2->getParent(10) << std::endl;
     maxHeap2->add(2, elementCompare);
     std::cout << maxHeap2->array[0] << std::endl;
     maxHeap2->add(1, elementCompare);
