@@ -10,18 +10,21 @@
 
 #include "DynamicArray.h"
 
-extern "C" int maxHeapAdd(struct MaxHeap2 *heap, int val);
+extern "C" int maxHeapAdd(struct MaxHeap2 *heap, int val, int (*cmp)(const int, const int));
 extern "C" int DynamicArray_add(DynamicArray<int> *arr, int val, int (*cmp)(const int, const int)) {
-    arr->add(val);
-    return 0;
+    return arr->add(val);
 }
 extern "C" void DynamicArray_swap(DynamicArray<int> *arr, int index1, int index2) {
     arr->swap(index1, index2);
 }
-extern "C" int maxHeapGetParent(int index);
-extern "C" int maxHeapBubbleUp(struct MaxHeap2 *heap, int child, int (*cmp)(const int, const int));
+extern "C" int DynamicArray_size(DynamicArray<int> *arr) {
+    return arr->size();
+}
 
-extern "C" int elementCompare(int new_obj, int list_obj) {
+//extern "C" int maxHeapGetParent(int index);
+//extern "C" int maxHeapBubbleUp(struct MaxHeap2 *heap, int child, int (*cmp)(const int, const int));
+
+int elementCompare(int new_obj, int list_obj) {
     if (new_obj > list_obj) return 1;
     if (new_obj < list_obj) return -1;
     return 0;
@@ -93,17 +96,16 @@ struct MaxHeap2 {
     DynamicArray<int> array;
 
     void add(int val, int (*cmp)(const int, const int)) {
-        maxHeapAdd(this, val);
-        bubbleUp(array.size() - 1, cmp);
+        maxHeapAdd(this, val, cmp);
     };
 
-    static int getParent(int index) {
-        return maxHeapGetParent(index);
-    }
+    // static int getParent(int index) {
+    //     return maxHeapGetParent(index);
+    // }
 
-    void bubbleUp(int child, int (*cmp)(const int, const int)) {
-        maxHeapBubbleUp(this, child, cmp);
-    }
+    // void bubbleUp(int child, int (*cmp)(const int, const int)) {
+    //     maxHeapBubbleUp(this, child, cmp);
+    // }
 
     // void bubbleUp(int child, int (*cmp)(int, int)) {
     //     if (child == 0) return;
@@ -274,7 +276,7 @@ void assertTests(MaxHeap <SomeObject>* maxHeap) {
     std::cout << maxHeap->getParent(0) << std::endl;
 
     MaxHeap2 *maxHeap2 = new MaxHeap2();
-    std::cout << maxHeap2->getParent(10) << std::endl;
+    //std::cout << maxHeap2->getParent(10) << std::endl;
     maxHeap2->add(2, elementCompare);
     std::cout << maxHeap2->array[0] << std::endl;
     maxHeap2->add(1, elementCompare);

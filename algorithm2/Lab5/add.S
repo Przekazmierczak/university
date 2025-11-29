@@ -3,33 +3,41 @@
 
 .global DynamicArray_add
 .global DynamicArray_swap
+.global DynamicArray_size
 
-.global maxHeapGetParent
-.global maxHeapBubbleUp
-.global elementCompare
+#.global maxHeapGetParent
+#.global maxHeapBubbleUp
+#.global elementCompare
 
 maxHeapAdd:
-    sub rsp, 32     # shadow space
+    push r12
+    push r13
+    mov r12, rcx
+    mov r13, r8
 
-    # mov eax, [ebp + 8]     # this pointer
-    #mov edx, [ebp + 12]     # val (pointer or value depending on SomeObject)
-    
-    # rcx - this pointer
-    # rdx - val
-
-    # array is at offset 0
-    # lea eax, [eax + 0]     # pointer to array
-
-    # call DynamicArray_add(array, val)
-    # push edx               # val
-    # push eax               # this pointer
-    #mov rcx, [rcx]
-    #mov rdx, rdx
+    sub rsp, 40     # shadow space
     call DynamicArray_add
-    # add esp, 8             # clean stack
+    add rsp, 40
 
-    # pop ebp
-    add rsp, 32
+    # int maxHeapBubbleUp(struct MaxHeap2 *heap, int child, int (*cmp)(const int, const int))
+    mov rcx, r12    # this pointer
+
+    sub rsp, 40
+    call DynamicArray_size
+    add rsp, 40
+
+    sub rax, 1
+
+    mov rcx, r12    # this pointer
+    mov rdx, rax
+    mov r8, r13      # pointer to cmp
+
+    sub rsp, 40
+    call maxHeapBubbleUp
+    add rsp, 40
+
+    pop r13
+    pop r12
     ret
 
 maxHeapGetParent:
@@ -44,7 +52,7 @@ maxHeapBubbleUp:
     # rdx    child
     # r8    pointer to cmp
 
-    push r12
+    #push r12
 
     mov r9, rcx           # save this pointer
     mov r10, rdx          # save child
@@ -59,28 +67,28 @@ maxHeapBubbleUp:
     call maxHeapGetParent
     add rsp, 40
 
-    mov r12, rax           # save parent
+    mov r8, rax           # save parent
 
     # int elementCompare(int new_obj, int list_obj)
-    mov r8, [r9]         # array
+    mov rax, [r9]         # array
 
-    lea rcx, [r8 + r10*4]   # get array[child]
-    mov rcx, [rcx]
+    #lea rcx, [r8 + r10*4]   # get array[child]
+    mov rcx, [rax + r10*4]
 
-    lea rdx, [r8 + r12*4]   # get array[parent]
-    mov rdx, [rdx]
+    #lea rdx, [r8 + r12*4]   # get array[parent]
+    mov rdx, [rax + r8*4]
 
     sub rsp, 40
-    call elementCompare
+    call r11
     add rsp, 40
 
-    cmp rax, 0
+    cmp eax, 0
     jle finish
 
     # void DynamicArray_swap(DynamicArray<int> *arr, int index1, int index2)
-    mov rcx, r8
+    mov rcx, r9
     mov rdx, r10
-    mov r8, r12
+    mov r8, r8
 
     sub rsp, 40
     call DynamicArray_swap
@@ -88,7 +96,7 @@ maxHeapBubbleUp:
 
     # int maxHeapBubbleUp(struct MaxHeap2 *heap, int child, int (*cmp)(const int, const int))
     mov rcx, r9
-    mov rdx, r12
+    mov rdx, r8
     mov r8, r11
     
     sub rsp, 40
@@ -96,5 +104,5 @@ maxHeapBubbleUp:
     add rsp, 40
 
 finish:
-    pop r12
+    #pop r12
     ret
