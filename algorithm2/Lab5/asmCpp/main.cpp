@@ -47,7 +47,7 @@ struct MaxHeap {
 
 SomeObject createRandom();
 
-int compare(const SomeObject* new_obj, const SomeObject* list_obj);
+int compare(const SomeObject* firstObj, const SomeObject* secondObj);
 std::string toStringObj(const SomeObject& obj);
 
 std::string getColumn(std::string value, int width, char filling, char last);
@@ -121,11 +121,11 @@ SomeObject createRandom() {
     return { rand() % 1000000, (char)('a' + rand() % 26) };
 };
 
-int compare(const SomeObject* new_obj, const SomeObject* list_obj) {
-    if (new_obj->field_1 > list_obj->field_1) return 1;
-    if (new_obj->field_1 < list_obj->field_1) return -1;
-    if (new_obj->field_2 > list_obj->field_2) return 1;
-    if (new_obj->field_2 < list_obj->field_2) return -1;
+int compare(const SomeObject* firstObj, const SomeObject* secondObj) {
+    if (firstObj->field_1 > secondObj->field_1) return 1;
+    if (firstObj->field_1 < secondObj->field_1) return -1;
+    if (firstObj->field_2 > secondObj->field_2) return 1;
+    if (firstObj->field_2 < secondObj->field_2) return -1;
     return 0;
 }
 

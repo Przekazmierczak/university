@@ -2,37 +2,45 @@
 .global maxHeapAdd
 .global maxHeapPop
 
+# int DynamicArray_add(DynamicArray<SomeObject> *arr, SomeObject val, int (*cmp)(const SomeObject*, const SomeObject*))
 .global DynamicArray_add
+# void DynamicArray_swap(DynamicArray<SomeObject> *arr, int index1, int index2)
 .global DynamicArray_swap
+# int DynamicArray_size(DynamicArray<SomeObject> *arr)
 .global DynamicArray_size
+# int DynamicArray_remove(DynamicArray<SomeObject> *arr)
 .global DynamicArray_remove
 
+# int maxHeapAdd(struct MaxHeap *heap, SomeObject val, int (*cmp)(const SomeObject*, const SomeObject*))
 maxHeapAdd:
     push r12
     push r13
-    mov r12, rcx
-    mov r13, r8
 
-    sub rsp, 40     # shadow space
+    mov r12, rcx            # this pointer
+    mov r13, r8             # cmp pointer
+
+    # Call DynamicArray_add(arr, val, cmp)
+    sub rsp, 32             # shadow space
     call DynamicArray_add
-    add rsp, 40
+    add rsp, 32
 
-    # int maxHeapBubbleUp(struct MaxHeap2 *heap, int child, int (*cmp)(const int, const int))
-    mov rcx, r12    # this pointer
+    # Call DynamicArray_size(arr)
+    mov rcx, r12
 
-    sub rsp, 40
+    sub rsp, 32
     call DynamicArray_size
-    add rsp, 40
+    add rsp, 32
 
-    sub rax, 1
+    # Call maxHeapBubbleUp(this, size - 1, cmp)
+    sub rax, 1              # size - 1
 
-    mov rcx, r12    # this pointer
+    mov rcx, r12
     mov rdx, rax
-    mov r8, r13      # pointer to cmp
+    mov r8, r13
 
-    sub rsp, 40
+    sub rsp, 32
     call maxHeapBubbleUp
-    add rsp, 40
+    add rsp, 32
 
     pop r13
     pop r12
@@ -40,107 +48,106 @@ maxHeapAdd:
 
 # SomeObject maxHeapPop(struct MaxHeap2 *heap, int (*cmp)(const SomeObject*, const SomeObject*))
 maxHeapPop:
-    push r12       # this pointer
-    push r13       # pointer to cmp
-    push r14       # temp res
-    mov r12, rcx
-    mov r13, rdx
+    push r12
+    push r13
+    push r14
 
-    mov r14, [r12]         # array
-    mov r14, [r14]         # array[0]
+    mov r12, rcx            # this pointer
+    mov r13, rdx            # cmp pointer
 
+    mov r14, [r12]          # array pointer
+    mov r14, [r14]          # temp array[0]
+
+    # Call DynamicArray_size(arr)
     mov rcx, r12
-    sub rsp, 40
+    sub rsp, 32
     call DynamicArray_size
-    add rsp, 40
+    add rsp, 32
 
-    sub rax, 1
+    sub rax, 1              # size - 1
     
-    # void DynamicArray_swap(DynamicArray *arr, int index1, int index2)
+    # Call DynamicArray_swap(arr, 0, size - 1)
     mov rcx, r12
     mov rdx, 0
     mov r8, rax
 
-    sub rsp, 40
+    sub rsp, 32
     call DynamicArray_swap
-    add rsp, 40
+    add rsp, 32
 
-    # int DynamicArray_remove(DynamicArray<SomeObject> *arr)
+    # Call DynamicArray_remove(arr)
     mov rcx, r12
-    sub rsp, 40
+    sub rsp, 32
     call DynamicArray_remove
-    add rsp, 40
+    add rsp, 32
 
-    # void bubbleDown(struct MaxHeap2 *heap, int parent, int (*cmp)(const Struct*, const Struct*))
+    # Call maxHeapBubbleDown(this, 0, cmp)
     mov rcx, r12
     mov rdx, 0
     mov r8, r13
 
-    sub rsp, 40
+    sub rsp, 32
     call maxHeapBubbleDown
-    add rsp, 40
+    add rsp, 32
 
-    mov rax, r14
+    mov rax, r14           # return temp array[0]
 
     pop r14
     pop r13
     pop r12
     ret
 
+# void maxHeapBubbleUp(struct MaxHeap *heap, int child, int (*cmp)(const SomeObject*, const SomeObject*))
 maxHeapBubbleUp:
-    # rcx    this pointer
-    # rdx    child
-    # r8    pointer to cmp
     push r12
     push r13
     push r14
     push r15
 
-    mov r12, rcx           # save this pointer
-    mov r13, rdx          # save child
-    mov r14, r8           # save pointer to cmp
+    mov r12, rcx           # this pointer
+    mov r13, rdx           # child
+    mov r14, r8            # cmp pointer
 
+    # if (child == 0) return
     test r13, r13
     jz finishBubbleUp
     
-    # maxHeapGetParent;
+    # get parent index
     mov rax, r13
     sub rax, 1
     shr rax, 1
 
-    mov r15, rax           # save parent
+    mov r15, rax           # parent
 
-    # Struct elementCompare(Struct obj1, Struct obj2)
+    # Call cmp(array[child], get array[parent])
     mov rax, [r12]         # array
+    lea rcx, [rax + r13*8] # get array[child]
+    lea rdx, [rax + r15*8] # get array[parent]
 
-    lea rcx, [rax + r13*8]   # get array[child]
-
-    lea rdx, [rax + r15*8]   # get array[parent]
-
-    sub rsp, 40
+    sub rsp, 32
     call r14
-    add rsp, 40
+    add rsp, 32
 
     cmp eax, 0
     jle finishBubbleUp
 
-    # void DynamicArray_swap(DynamicArray *arr, int index1, int index2)
+    # Call DynamicArray_swap(arr, child, parent)
     mov rcx, r12
     mov rdx, r13
     mov r8, r15
 
-    sub rsp, 40
+    sub rsp, 32
     call DynamicArray_swap
-    add rsp, 40
+    add rsp, 32
 
-    # void maxHeapBubbleUp(struct MaxHeap *heap, int child, int (*cmp)(const Struct*, const Struct*))
+    # Call maxHeapBubbleUp(this, parent, cmp)
     mov rcx, r12
     mov rdx, r15
     mov r8, r14
     
-    sub rsp, 40
+    sub rsp, 32
     call maxHeapBubbleUp
-    add rsp, 40
+    add rsp, 32
 
 finishBubbleUp:
     pop r15
@@ -151,100 +158,96 @@ finishBubbleUp:
 
 # void bubbleDown(struct MaxHeap *heap, int parent, int (*cmp)(const Struct*, const Struct*))
 maxHeapBubbleDown:
-    # rcx    this pointer
-    # rdx    parent
-    # r8    pointer to cmp
-    push r12     # this pointer
-    push r13     # parent
-    push r14     # pointer to cmp
-    push r15     # child
-    push rbx     # greatest
-    push rdi     # size
+    push r12
+    push r13
+    push r14
+    push r15
+    push rbx
+    push rdi
 
-    mov r12, rcx          # save this pointer
-    mov r13, rdx          # save parent
-    mov r14, r8           # save pointer to cmp
+    mov r12, rcx          # this pointer
+    mov r13, rdx          # parent
+    mov r14, r8           # cmp pointer
 
-    # int maxHeapGetChild(int parent);
+    # get left child index
     mov rax, rdx
     shl rax, 1
     add rax, 1
 
-    mov r15, rax           # save child
+    mov r15, rax           # left child
 
-    mov rbx, r13           # save greatest
+    mov rbx, r13           # greatest
 
+    # Call DynamicArray_size(arr)
     mov rcx, r12
-    sub rsp, 40
+    sub rsp, 32
     call DynamicArray_size
-    add rsp, 40
+    add rsp, 32
 
-    mov rdi, rax           # save size
+    mov rdi, rax           # size
 
-    ######### if (leftChild < array.size() && cmp(array[leftChild], array[parent]) > 0)
+    # if left child < size
     cmp r15, rdi
     jge skipLeft
 
-    # Struct elementCompare(Struct obj1, Struct obj2)
-    mov rax, [r12]         # array
-
-    lea rcx, [rax + r15*8]   # get array[child]
-
+    # if cmp(array[leftChild], array[parent]) > 0
+    # Call cmp(array[leftChild], array[parent])
+    mov rax, [r12]           # array
+    lea rcx, [rax + r15*8]   # get array[leftChild]
     lea rdx, [rax + r13*8]   # get array[parent]
 
-    sub rsp, 40
+    sub rsp, 32
     call r14
-    add rsp, 40
+    add rsp, 32
 
     cmp eax, 0
     jle skipLeft
 
-    mov rbx, r15
+    mov rbx, r15           # greatest
 
 skipLeft:
-    add r15, 1
-    ######### if (rightChild < array.size() && cmp(array[rightChild], array[greatest]) > 0)
+    add r15, 1             # right child
+    # if right child < size
     cmp r15, rdi
     jge skipRight
 
-    # Struct elementCompare(Struct obj1, Struct obj2)
-    mov rax, [r12]         # array
-
-    lea rcx, [rax + r15*8]   # get array[child]
-
+    # if cmp(array[rightChild], array[greatest]) > 0
+    # Call cmp(array[rightChild], array[greatest])
+    mov rax, [r12]           # array
+    lea rcx, [rax + r15*8]   # get array[rightChild]
     lea rdx, [rax + rbx*8]   # get array[greatest]
 
-    sub rsp, 40
+    sub rsp, 32
     call r14
-    add rsp, 40
+    add rsp, 32
 
     cmp eax, 0
     jle skipRight
 
-    mov rbx, r15
+    mov rbx, r15           # greatest
 
 skipRight:
-    ######### if (greatest != parent)
+    # if greatest != parent
     cmp rbx, r13
     jz finishBubbleDown
 
-    # void DynamicArray_swap(DynamicArray *arr, int index1, int index2)
+    # Call DynamicArray_swap(arr, parent, greatest)
     mov rcx, r12
     mov rdx, r13
     mov r8, rbx
 
-    sub rsp, 40
+    sub rsp, 32
     call DynamicArray_swap
-    add rsp, 40
+    add rsp, 32
 
-    # int maxHeapBubbleDown(struct MaxHeap *heap, int parent, int (*cmp)(const Struct*, const Struct*))
+    # Call maxHeapBubbleDown(this, greatest, cmp)
     mov rcx, r12
     mov rdx, rbx
     mov r8, r14
     
-    sub rsp, 40
+    sub rsp, 32
     call maxHeapBubbleDown
-    add rsp, 40
+    add rsp, 32
 
 
 finishBubbleDown:
