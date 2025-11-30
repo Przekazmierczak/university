@@ -10,27 +10,6 @@
 
 #include "DynamicArray.h"
 
-extern "C" int maxHeapAdd(struct MaxHeap2 *heap, int val, int (*cmp)(const int, const int));
-extern "C" int DynamicArray_add(DynamicArray<int> *arr, int val, int (*cmp)(const int, const int)) {
-    return arr->add(val);
-}
-extern "C" void DynamicArray_swap(DynamicArray<int> *arr, int index1, int index2) {
-    arr->swap(index1, index2);
-}
-extern "C" int DynamicArray_size(DynamicArray<int> *arr) {
-    return arr->size();
-}
-
-//extern "C" int maxHeapGetParent(int index);
-//extern "C" int maxHeapBubbleUp(struct MaxHeap2 *heap, int child, int (*cmp)(const int, const int));
-
-int elementCompare(int new_obj, int list_obj) {
-    if (new_obj > list_obj) return 1;
-    if (new_obj < list_obj) return -1;
-    return 0;
-};
-
-
 template <typename T>
 struct MaxHeap {
     DynamicArray<T> array;
@@ -51,9 +30,9 @@ struct MaxHeap {
 
     void clear() { array.clear(); };
 
-    std::string toString(std::string (*toStringObj)(const T&)) { return array.toString(toStringObj); };
+    std::string toString(std::string (*toStringObj)(const T&)) { return array.toString(toStringObj); }
 
-    // private:
+    private:
     void bubbleUp(int child, int (*cmp)(const T&, const T&)) {
         if (child == 0) return;
         int parent = getParent(child);
@@ -92,31 +71,6 @@ struct MaxHeap {
     }
 };
 
-struct MaxHeap2 {
-    DynamicArray<int> array;
-
-    void add(int val, int (*cmp)(const int, const int)) {
-        maxHeapAdd(this, val, cmp);
-    };
-
-    // static int getParent(int index) {
-    //     return maxHeapGetParent(index);
-    // }
-
-    // void bubbleUp(int child, int (*cmp)(const int, const int)) {
-    //     maxHeapBubbleUp(this, child, cmp);
-    // }
-
-    // void bubbleUp(int child, int (*cmp)(int, int)) {
-    //     if (child == 0) return;
-    //     int parent = getParent(child);
-    //     if (cmp(array[child], array[parent]) > 0) {
-    //         array.swap(child, parent);
-    //         bubbleUp(parent, cmp);
-    //     }
-    // }
-};
-
 struct SomeObject {
     int field_1;
     char field_2;
@@ -133,8 +87,6 @@ std::string toStringObj(const SomeObject& obj);
 
 std::string getColumn(std::string value, int width, char filling, char last);
 void printSeparator(int numOfMethods,int width);
-
-void fillBST(int elements, MaxHeap <SomeObject>* maxHeap);
 
 template <typename Func>
 std::string measureMethod(Func func, MaxHeap <SomeObject>* maxHeap, int elements, bool requiresFill, int width, bool multiRun);
@@ -272,23 +224,6 @@ void assertTests(MaxHeap <SomeObject>* maxHeap) {
     SomeObject s9 = { 9, 'j' };
     SomeObject s10 = { 10, 'k' };
     SomeObject s11 = { 11, 'i' };
-
-    std::cout << maxHeap->getParent(0) << std::endl;
-
-    MaxHeap2 *maxHeap2 = new MaxHeap2();
-    //std::cout << maxHeap2->getParent(10) << std::endl;
-    maxHeap2->add(2, elementCompare);
-    std::cout << maxHeap2->array[0] << std::endl;
-    maxHeap2->add(1, elementCompare);
-    std::cout << maxHeap2->array[0] << maxHeap2->array[1] << std::endl;
-    maxHeap2->add(8, elementCompare);
-    std::cout << maxHeap2->array[0] << maxHeap2->array[1] << maxHeap2->array[2] << std::endl;
-    maxHeap2->add(3, elementCompare);
-    std::cout << maxHeap2->array[0] << maxHeap2->array[1] << maxHeap2->array[2] << maxHeap2->array[3] << std::endl;
-    maxHeap2->add(4, elementCompare);
-    std::cout << maxHeap2->array[0] << maxHeap2->array[1] << maxHeap2->array[2] << maxHeap2->array[3] << maxHeap2->array[4] << std::endl;
-    maxHeap2->add(9, elementCompare);
-    std::cout << maxHeap2->array[0] << maxHeap2->array[1] << maxHeap2->array[2] << maxHeap2->array[3] << maxHeap2->array[4] << maxHeap2->array[5] << std::endl;
 
     maxHeap->add(s0, compare);
     maxHeap->add(s3, compare);
