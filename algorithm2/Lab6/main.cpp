@@ -16,9 +16,28 @@ struct HashTable {
     struct Pair {
         std::string key;
         T val;
+        Pair() {};
+        Pair(std::string keyInput, T valInput) {
+            key = keyInput;
+            val = valInput;
+        }
     };
     
-    DynamicArray<LinkedList<Pair>> *array = new DynamicArray<LinkedList<Pair>>(5);
+    std::string toStringPair(const Pair& obj) {
+        return std::to_string(obj.key) + ", " + obj.val;
+    }
+
+    DynamicArray<LinkedList<Pair>> *array = new DynamicArray<LinkedList<Pair>>();
+
+    int add(std::string key, T val) {
+        Pair *pair = new Pair(key, val);
+        int index = hash(pair->key);
+        LinkedList<Pair> list = array->at(index);
+        if (list.size == 0) {
+            list.addFront(*pair);
+        }
+        return 0;
+    }
 
     int hash(std::string key) {
         long res = 0;
@@ -26,16 +45,23 @@ struct HashTable {
         for (int i = 0; i < size; i++) {
             res += (long)(key[i]) * pow(31, size - 1 - i);
         }
-        return res % array->maxSize();
+        return res % array->checkMaxSize();
+    }
+
+    void toString() {
+        for (int i = 0; i < array->checkMaxSize(); i++) {
+            std::cout << i << ":" << std::endl;
+        }
     }
 
 private:
 
 };
 
+template <typename T>
 struct SomeObject {
     std::string key;
-    int val;
+    T val;
 
     bool operator==(const SomeObject& other) const {
         return key == other.key && val == other.val;
@@ -55,11 +81,11 @@ struct SomeObject {
 // template <typename Func>
 // std::string measureMethod(Func func, BST <SomeObject>* bst, int elements, bool requiresFill, int width, bool multiRun);
 
-void assertTests(HashTable <SomeObject>* hashTable);
+void assertTests(HashTable <int>* hashTable);
 
 int main() {
     srand(time(0));
-    HashTable <SomeObject>* hashTable = new HashTable <SomeObject>();
+    HashTable <int>* hashTable = new HashTable <int>();
 
     // Small correctness check
     assertTests(hashTable);
@@ -178,18 +204,21 @@ int main() {
 //     return getColumn(strTime + 's', width, ' ', '|');
 // }
 
-void assertTests(HashTable <SomeObject>* hashTable) {
-    SomeObject s0 = { "zero", 0 };
-    SomeObject s1 = { "one", 1 };
-    SomeObject s2 = { "two", 2 };
-    SomeObject s3 = { "three", 3 };
-    SomeObject s4 = { "four", 4 };
-    SomeObject s5 = { "five", 5 };
-    SomeObject s6 = { "six", 6 };
-    SomeObject s7 = { "seven", 7 };
-    SomeObject s8 = { "eight", 8 };
-    SomeObject s9 = { "nine", 9 };
-    SomeObject s10 = { "ten", 10 };
-    SomeObject s11 = { "eleven", 11 };
+void assertTests(HashTable <int>* hashTable) {
+    SomeObject<int> s0 = { "zero", 0 };
+    SomeObject<int> s1 = { "one", 1 };
+    SomeObject<int> s2 = { "two", 2 };
+    SomeObject<int> s3 = { "three", 3 };
+    SomeObject<int> s4 = { "four", 4 };
+    SomeObject<int> s5 = { "five", 5 };
+    SomeObject<int> s6 = { "six", 6 };
+    SomeObject<int> s7 = { "seven", 7 };
+    SomeObject<int> s8 = { "eight", 8 };
+    SomeObject<int> s9 = { "nine", 9 };
+    SomeObject<int> s10 = { "ten", 10 };
+    SomeObject<int> s11 = { "eleven", 11 };
 
+    hashTable->add(s0.key, s0.val);
+
+    hashTable->toString();
 }
