@@ -9,7 +9,7 @@ struct DynamicArray {
     T* array;
 
     DynamicArray() : ratio(2), currSize(0), maxSize(1) { array = new T[maxSize]; }
-    DynamicArray(int size) : ratio(2), currSize(0), maxSize(size) { array = new T[size]; }
+    DynamicArray(int currSizeInput, int maxSizeInput) : ratio(2), currSize(currSizeInput), maxSize(maxSizeInput) { array = new T[maxSizeInput]; }
     ~DynamicArray() { delete[] array; }
 
     int size() const { return currSize; }
