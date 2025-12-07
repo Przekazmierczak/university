@@ -18,10 +18,10 @@ struct LinkedList {
         }
     };
 
-    int size = 0;
-
     LinkedList();
     ~LinkedList();
+
+    int size() { return currSize; }
 
     int addFront(T newNodeVal);
     int addBack(T newNodeVal);
@@ -44,6 +44,7 @@ struct LinkedList {
 
 private:
     Node* dummy;
+    int currSize = 0;
     enum Status { SUCCESS = 0, FAIL = 1 };
 
     Node* createNewNode(T newNodeVal);
@@ -98,14 +99,14 @@ int LinkedList<T>::removeBack() {
 
 template <typename T>
 T& LinkedList<T>::at(int index) const {
-    if (index >= size || index < 0) {
+    if (index >= currSize || index < 0) {
         throw std::out_of_range("Index out of range");
     }
 
-    if (index < size / 2) {
+    if (index < currSize / 2) {
         return getFromIndexFront(index);
     }
-    return getFromIndexBack(size - index - 1);
+    return getFromIndexBack(currSize - index - 1);
 }
 
 template <typename T>
@@ -124,7 +125,6 @@ T* LinkedList<T>::find(A searched, int (*cmp)(const A&, const T&)) const {
     Node* find = findNode(searched, cmp);
     
     if (find != nullptr) return &(find->val);
-    std::cout << "test" << std::endl;
     return nullptr;
 }
 
@@ -193,7 +193,7 @@ void LinkedList<T>::addNodeFront(LinkedList<T>::Node* newNode, LinkedList<T>::No
     newNode->prev = node;
     newNode->next->prev = newNode;
     node->next = newNode;
-    size++;
+    currSize++;
 }
 
 template <typename T>
@@ -202,7 +202,7 @@ void LinkedList<T>::addNodeBack(LinkedList<T>::Node* newNode, LinkedList<T>::Nod
     newNode->next = node;
     newNode->prev->next = newNode;
     node->prev = newNode;
-    size++;
+    currSize++;
 }
 
 template <typename T>
@@ -211,7 +211,7 @@ int LinkedList<T>::removeNode(LinkedList<T>::Node* node) {
         node->prev->next = node->next;
         node->next->prev = node->prev;
         delete node;
-        size--;
+        currSize--;
         return SUCCESS;
     }
     return FAIL;

@@ -23,9 +23,14 @@ struct HashTable {
         }
 
     };
+
+    ~HashTable() {
+        clear();
+        free(array);
+    }
     
     static std::string toStringPair(const Pair& pair) {
-        return pair.key + ": " + std::to_string(pair.val);
+        return pair.key + "->" + std::to_string(pair.val);
     }
     
     static int compare(const Pair& first, const Pair& second) {
@@ -39,45 +44,70 @@ struct HashTable {
     DynamicArray<LinkedList<Pair>> *array = new DynamicArray<LinkedList<Pair>>(5, 5);
 
     int add(std::string key, T val) {
-        int index = hash(key);
+        return addHelper(key, val, array);
+    }
 
-        Pair* currPair = array->at(index).find(key, compare2);
+    Pair* find(std::string key) {
+        int index = hash(key, array->size());
+        return array->at(index).find(key, compare2);
+    }
+
+    bool remove(std::string key) {
+        int index = hash(key, array->size());
+        return array->at(index).findRemove(key, compare2);
+    }
+
+    bool clear() {
+        for (int i = 0; i < array->size(); i++) {
+            array->at(i).clear();
+        }
+    }
+
+    int hash(std::string key, int arraySize) {
+        long res = 0;
+        int size = key.size();
+        for (int i = 0; i < size; i++) {
+            res += (long)(key[i]) * pow(31, size - 1 - i);
+        }
+        return res % arraySize;
+    }
+
+    void toString() {
+        std::cout << "table {" << std::endl;
+        for (int i = 0; i < array->checkMaxSize(); i++) {
+            if (array->at(i).size() > 0) {
+                std::cout << "    " << i << ":" << array->at(i).toString(toStringPair) << std::endl;
+            }
+        }
+        std::cout << "}" << std::endl;
+    }
+
+    void resizeRehash() {
+        DynamicArray<LinkedList<Pair>> *newArray = new DynamicArray<LinkedList<Pair>>(array->size() * 2, array->size() * 2);
+
+        for (int i = 0; i < array->size(); i++) {
+            for (int j = 0; j < array->at(i).size(); j++) {
+                addHelper(array->at(i).at(j).key, array->at(i).at(j).val, newArray);
+            }
+        }
+
+        free(array);
+        array = newArray;
+    }
+
+private:
+    int addHelper(std::string key, T val, DynamicArray<LinkedList<Pair>> *currArray) {
+        int index = hash(key, currArray->size());
+
+        Pair* currPair = currArray->at(index).find(key, compare2);
         if (currPair != nullptr) {
             currPair->val = val;
             return 0;
         }
         
         Pair *pair = new Pair(key, val);
-        return array->at(index).addFront(*pair);
+        return currArray->at(index).addFront(*pair);
     }
-
-    Pair* find(std::string key) {
-        int index = hash(key);
-        return array->at(index).find(key, compare2);
-    }
-
-    bool remove(std::string key) {
-        int index = hash(key);
-        return array->at(index).findRemove(key, compare2);
-    }
-
-    int hash(std::string key) {
-        long res = 0;
-        int size = key.size();
-        for (int i = 0; i < size; i++) {
-            res += (long)(key[i]) * pow(31, size - 1 - i);
-        }
-        return res % array->checkMaxSize();
-    }
-
-    void toString() {
-        for (int i = 0; i < array->checkMaxSize(); i++) {
-            std::cout << i << ":" << array->at(i).toString(toStringPair) << std::endl;
-        }
-    }
-
-private:
-
 };
 
 template <typename T>
@@ -256,5 +286,12 @@ void assertTests(HashTable <int>* hashTable) {
     hashTable->remove(s2.key);
     hashTable->remove(s1.key);
 
+    hashTable->resizeRehash();
+    hashTable->toString();
+
+    hashTable->resizeRehash();
+    hashTable->toString();
+
+    hashTable->resizeRehash();
     hashTable->toString();
 }
