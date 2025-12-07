@@ -21,22 +21,44 @@ struct HashTable {
             key = keyInput;
             val = valInput;
         }
+
     };
     
-    std::string toStringPair(const Pair& obj) {
-        return std::to_string(obj.key) + ", " + obj.val;
+    static std::string toStringPair(const Pair& pair) {
+        return pair.key + ": " + std::to_string(pair.val);
+    }
+    
+    static int compare(const Pair& first, const Pair& second) {
+        return !(first.key == second.key && first.val == second.val);
     }
 
-    DynamicArray<LinkedList<Pair>> *array = new DynamicArray<LinkedList<Pair>>();
+    static int compare2(const std::string& key, const Pair& pair) {
+        return !(key == pair.key);
+    }
+    
+    DynamicArray<LinkedList<Pair>> *array = new DynamicArray<LinkedList<Pair>>(5, 5);
 
     int add(std::string key, T val) {
-        Pair *pair = new Pair(key, val);
-        int index = hash(pair->key);
-        LinkedList<Pair> list = array->at(index);
-        if (list.size == 0) {
-            list.addFront(*pair);
+        int index = hash(key);
+
+        Pair* currPair = array->at(index).find(key, compare2);
+        if (currPair != nullptr) {
+            currPair->val = val;
+            return 0;
         }
-        return 0;
+        
+        Pair *pair = new Pair(key, val);
+        return array->at(index).addFront(*pair);
+    }
+
+    Pair* find(std::string key) {
+        int index = hash(key);
+        return array->at(index).find(key, compare2);
+    }
+
+    bool remove(std::string key) {
+        int index = hash(key);
+        return array->at(index).findRemove(key, compare2);
     }
 
     int hash(std::string key) {
@@ -50,7 +72,7 @@ struct HashTable {
 
     void toString() {
         for (int i = 0; i < array->checkMaxSize(); i++) {
-            std::cout << i << ":" << std::endl;
+            std::cout << i << ":" << array->at(i).toString(toStringPair) << std::endl;
         }
     }
 
@@ -219,6 +241,20 @@ void assertTests(HashTable <int>* hashTable) {
     SomeObject<int> s11 = { "eleven", 11 };
 
     hashTable->add(s0.key, s0.val);
+    hashTable->add(s1.key, s1.val);
+    hashTable->add(s2.key, s2.val);
+    hashTable->add(s3.key, s3.val);
+    hashTable->add(s4.key, s4.val);
+    hashTable->add(s5.key, s5.val);
+    hashTable->add(s6.key, s6.val);
+    hashTable->add(s2.key, s7.val);
+    hashTable->add(s6.key, s5.val);
+
+    hashTable->toString();
+    std::cout << HashTable<int>::toStringPair(*(hashTable->find("five"))) << std::endl;
+
+    hashTable->remove(s2.key);
+    hashTable->remove(s1.key);
 
     hashTable->toString();
 }

@@ -124,7 +124,7 @@ T* LinkedList<T>::find(A searched, int (*cmp)(const A&, const T&)) const {
     Node* find = findNode(searched, cmp);
     
     if (find != nullptr) return &(find->val);
-
+    std::cout << "test" << std::endl;
     return nullptr;
 }
 
