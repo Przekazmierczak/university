@@ -151,6 +151,19 @@ int fun3(uint8_t a) {
     }
 }
 
+int fun31(uint8_t a) {
+    // sprawdzic
+    _asm {
+        xor bl, bl
+        and al, 0x1
+        add bl, al
+        shr b, 1
+        mov y, bl
+    }
+
+
+}
+
 int fun4(uint8_t a)
 {
     uint8_t y;
@@ -221,6 +234,8 @@ int fun5(uint8_t a) {
 
         mov cl, al
         and cl, 0x01
+        cmp cl, 0
+        jnz end_if0
         add bl, cl
         end_if0:
 
