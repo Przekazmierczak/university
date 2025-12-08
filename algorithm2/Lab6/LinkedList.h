@@ -167,7 +167,7 @@ std::string LinkedList<T>::toString(std::string (*toStringObj)(const T&)) const 
 
     std::string str = "[";
     while (curr != dummy) {
-        if (curr != dummy->next) str+= ";";
+        if (curr != dummy->next) str+= "; ";
         str += toStringObj(curr->val);
         curr = curr->next;
     }
