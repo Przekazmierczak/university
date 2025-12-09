@@ -78,9 +78,13 @@ struct HashTable {
         str += "  Current size: " + std::to_string(currSize) + "\n";
         str += "  Max size: " + std::to_string(array->size()) + "\n";
         str += "  Table:\n";
-        for (int i = 0; i < array->checkMaxSize(); i++) {
+        for (int i = 0; i < array->size(); i++) {
             if (array->at(i).size() > 0) {
-                str += "      " + std::to_string(i) + ":" + array->at(i).toString(Pair::toString) + "\n";
+                if (occupiedList < 8) {
+                    str += "      " + std::to_string(i) + ":" + array->at(i).toString(Pair::toString) + "\n";
+                } else if (occupiedList == 8) {
+                    str += "      ...\n";
+                }
                 if (listMaxSize < array->at(i).size()) listMaxSize = array->at(i).size();
                 occupiedList++;
             }
@@ -113,12 +117,11 @@ private:
     }
 
     int hash(std::string key, int arraySize) {
-        long res = 0;
-        int size = key.size();
-        for (int i = 0; i < size; i++) {
-            res += (long)(key[i]) * pow(31, size - 1 - i);
+        long long res = 0;
+        for (unsigned char c : key) {
+            res = (res * 31 + c) % arraySize;
         }
-        return res % arraySize;
+        return (int)res;
     }
 
     int resizeRehash() {
@@ -141,28 +144,16 @@ private:
     }
 };
 
-template <typename T>
-struct SomeObject {
-    std::string key;
-    T val;
+std::string generateRandomKey();
+int generateRandomVal();
 
-    bool operator==(const SomeObject& other) const {
-        return key == other.key && val == other.val;
-    }
-};
+std::string getColumn(std::string value, int width, char filling, char last);
+void printSeparator(int numOfMethods,int width);
 
-// SomeObject createRandom();
+void fillHashTable(int elements, HashTable<int>* hashTable);
 
-// int compare(const SomeObject& new_obj, const SomeObject& list_obj);
-// std::string toStringObj(const SomeObject& obj);
-
-// std::string getColumn(std::string value, int width, char filling, char last);
-// void printSeparator(int numOfMethods,int width);
-
-// void fillBST(int elements, BST <SomeObject>* bst);
-
-// template <typename Func>
-// std::string measureMethod(Func func, BST <SomeObject>* bst, int elements, bool requiresFill, int width, bool multiRun);
+template <typename Func>
+std::string measureMethod(Func func, HashTable<int>* hashTable, int elements, bool requiresFill, int width, bool multiRun);
 
 void assertTests(HashTable <int>* hashTable);
 
@@ -173,156 +164,266 @@ int main() {
     // Small correctness check
     assertTests(hashTable);
 
-    // // Maximum order: 9 (int overflow)
-    // int maxOrder = 7;
-    // int columnWidth = 11;
+    // Maximum order: 9 (int overflow)
+    int maxOrder = 7;
+    int columnWidth = 11;
 
-    // struct TestArguments {
-    //     bool enabled;
-    //     std::string name;
-    //     std::function<void()> body;
-    //     bool requiresFill;
-    //     bool multiRun;
-    // };
+    struct TestArguments {
+        bool enabled;
+        std::string name;
+        std::function<void()> body;
+        bool requiresFill;
+        bool multiRun;
+    };
 
-    // // Change first value (enabled) to reduce number of tests
-    // TestArguments testMethods[] = {
-    //     {true, "add()", [bst]() { bst->add(createRandom(), compare); }, false, true},
-    //     {true, "find()", [bst]() { bst->find(createRandom(), compare); }, true, true},
-    //     {true, "remove()", [bst]() { bst->remove(createRandom(), compare); }, true, true},
-    //     {true, "preorder()", [bst]() { bst->preorder(); }, true, false},
-    //     {true, "inorder()", [bst]() { bst->inorder(); }, true, false},
-    //     {true, "clear()", [bst]() { bst->clear(); }, true, false}
-    // };
+    // Change first value (enabled) to reduce number of tests
+    TestArguments testMethods[] = {
+        {true, "add()", [hashTable]() { hashTable->add(generateRandomKey(), generateRandomVal()); }, false, true},
+        {true, "find()", [hashTable]() { hashTable->find(generateRandomKey()); }, true, true},
+        {true, "remove()", [hashTable]() { hashTable->remove(generateRandomKey()); }, true, true}
+    };
 
-    // int countMethodsToPrint = 0;
-    // for (const TestArguments& testMethod : testMethods) {
-    //     if (testMethod.enabled) countMethodsToPrint++;
-    // }
+    int countMethodsToPrint = 0;
+    for (const TestArguments& testMethod : testMethods) {
+        if (testMethod.enabled) countMethodsToPrint++;
+    }
 
-    // printSeparator(countMethodsToPrint, columnWidth);
-    // std::cout << "|" << getColumn("elements", columnWidth, ' ', '|');
-    // for (const TestArguments& testMethod : testMethods) {
-    //     if (testMethod.enabled) std::cout << getColumn(testMethod.name, columnWidth, ' ', '|');
-    // }
-    // std::cout << std::endl;
-    // printSeparator(countMethodsToPrint, columnWidth);
+    printSeparator(countMethodsToPrint, columnWidth);
+    std::cout << "|" << getColumn("elements", columnWidth, ' ', '|');
+    for (const TestArguments& testMethod : testMethods) {
+        if (testMethod.enabled) std::cout << getColumn(testMethod.name, columnWidth, ' ', '|');
+    }
+    std::cout << std::endl;
+    printSeparator(countMethodsToPrint, columnWidth);
 
-    // // performance tests
-    // for (int o = 1; o <= maxOrder; o++) {
-    //     int elements = pow(10, o);
-    //     std::cout << "|" << getColumn(std::to_string(elements), columnWidth, ' ', '|');
-    //     for (const TestArguments& testMethod : testMethods) {
-    //         if (testMethod.enabled) {
-    //             std::cout <<
-    //             measureMethod(testMethod.body, bst, elements,
-    //                           testMethod.requiresFill, columnWidth,
-    //                           testMethod.multiRun)
-    //             << std::flush;
-    //         }
-    //     }
-    //     std::cout << std::endl;
-    // }
-    // printSeparator(countMethodsToPrint, columnWidth);
+    // performance tests
+    for (int o = 1; o <= maxOrder; o++) {
+        int elements = pow(10, o);
+        std::cout << "|" << getColumn(std::to_string(elements), columnWidth, ' ', '|');
+        for (const TestArguments& testMethod : testMethods) {
+            if (testMethod.enabled) {
+                std::cout <<
+                measureMethod(testMethod.body, hashTable, elements,
+                              testMethod.requiresFill, columnWidth,
+                              testMethod.multiRun)
+                << std::flush;
+            }
+        }
+        std::cout << std::endl;
+    }
+    printSeparator(countMethodsToPrint, columnWidth);
 
-    // delete bst;
+    delete hashTable;
 }
 
-// SomeObject createRandom() {
-//     return { rand() % 1000000, (char)('a' + rand() % 26) };
-// };
+std::string generateRandomKey() {
+    std::string key;
+    for (int i = 0; i < 6; i++) {
+        key += (char)('a' + rand() % 26);
+    }
+    return key;
+};
 
-// int compare(const SomeObject& new_obj, const SomeObject& list_obj) {
-//     if (new_obj.field_1 > list_obj.field_1) return 1;
-//     if (new_obj.field_1 < list_obj.field_1) return -1;
-//     if (new_obj.field_2 > list_obj.field_2) return 1;
-//     if (new_obj.field_2 < list_obj.field_2) return -1;
-//     return 0;
-// }
+int generateRandomVal() {
+    return rand() % 1000000;
+};
 
-// std::string toStringObj(const SomeObject& obj) {
-//     return std::to_string(obj.field_1) + ", " + obj.field_2;
-// }
+std::string getColumn(std::string value, int width, char filling, char last) {
+    if (value.size() < width) {
+        return std::string(width - value.size(), filling) + value + last;
+    }
+    return value;
+}
 
-// std::string getColumn(std::string value, int width, char filling, char last) {
-//     if (value.size() < width) {
-//         return std::string(width - value.size(), filling) + value + last;
-//     }
-//     return value;
-// }
+void printSeparator(int numOfMethods,int width) {
+    std::cout << "+";
+    for (int i = 0; i <= numOfMethods; i++) {
+        std::cout << getColumn("", width, '-', '+');
+    }
+    std::cout << std::endl;
+}
 
-// void printSeparator(int numOfMethods,int width) {
-//     std::cout << "+";
-//     for (int i = 0; i <= numOfMethods; i++) {
-//         std::cout << getColumn("", width, '-', '+');
-//     }
-//     std::cout << std::endl;
-// }
+void fillHashTable(int elements, HashTable<int>* hashTable) {
+    for (int i = 0; i < elements; i++) {
+        hashTable->add(generateRandomKey(), generateRandomVal());
+    }
+}
 
-// void fillBST(int elements, BST <SomeObject>* bst) {
-//     for (int i = 0; i < elements; i++) {
-//         bst->add(createRandom(), compare);
-//     }
-// }
+template <typename Func>
+std::string measureMethod(Func func, HashTable<int>* hashTable, int elements, bool requiresFill, int width, bool multiRun) {
+    if (requiresFill) fillHashTable(elements, hashTable);
 
-// template <typename Func>
-// std::string measureMethod(Func func, BST <SomeObject>* bst, int elements, bool requiresFill, int width, bool multiRun) {
-//     if (requiresFill) fillBST(elements, bst);
+    clock_t t1 = clock();
+    if (multiRun) {
+        for (int i = 0; i < elements; i++) {
+            func();
+        }
+    } else {
+        func();
+    }
+    clock_t t2 = clock();
 
-//     clock_t t1 = clock();
-//     if (multiRun) {
-//         for (int i = 0; i < elements; i++) {
-//             func();
-//         }
-//     } else {
-//         func();
-//     }
-//     clock_t t2 = clock();
+    hashTable->clear();
 
-//     bst->clear();
-
-//     double currTime = (t2 - t1) / (double)CLOCKS_PER_SEC;
-//     std:: string strTime = std::to_string(currTime);
-//     strTime.erase(strTime.size() - 3);
-//     return getColumn(strTime + 's', width, ' ', '|');
-// }
+    double currTime = (t2 - t1) / (double)CLOCKS_PER_SEC;
+    std:: string strTime = std::to_string(currTime);
+    strTime.erase(strTime.size() - 3);
+    return getColumn(strTime + 's', width, ' ', '|');
+}
 
 void assertTests(HashTable <int>* hashTable) {
-    SomeObject<int> s0 = { "zero", 0 };
-    SomeObject<int> s1 = { "one", 1 };
-    SomeObject<int> s2 = { "two", 2 };
-    SomeObject<int> s3 = { "three", 3 };
-    SomeObject<int> s4 = { "four", 4 };
-    SomeObject<int> s5 = { "five", 5 };
-    SomeObject<int> s6 = { "six", 6 };
-    SomeObject<int> s7 = { "seven", 7 };
-    SomeObject<int> s8 = { "eight", 8 };
-    SomeObject<int> s9 = { "nine", 9 };
-    SomeObject<int> s10 = { "ten", 10 };
-    SomeObject<int> s11 = { "eleven", 11 };
+    // Test add, overwrite, remove, add: "zero" -> 0
+    hashTable->add("zero", 0);
+    assert(hashTable->size() == 1);
+    assert(hashTable->maxSize() == 5);
+    assert(hashTable->find("zero")->val == 0);
 
-    hashTable->add(s0.key, s0.val);
-    std::cout << hashTable->toString() << std::endl;
-    hashTable->add(s1.key, s1.val);
-    std::cout << hashTable->toString() << std::endl;
-    hashTable->add(s2.key, s2.val);
-    std::cout << hashTable->toString() << std::endl;
-    hashTable->add(s3.key, s3.val);
-    std::cout << hashTable->toString() << std::endl;
-    hashTable->add(s4.key, s4.val);
-    std::cout << hashTable->toString() << std::endl;
-    hashTable->add(s5.key, s5.val);
-    std::cout << hashTable->toString() << std::endl;
-    hashTable->add(s6.key, s6.val);
-    std::cout << hashTable->toString() << std::endl;
-    hashTable->add(s2.key, s7.val);
-    std::cout << hashTable->toString() << std::endl;
-    hashTable->add(s6.key, s5.val);
-    std::cout << hashTable->toString() << std::endl;
-    hashTable->add(s8.key, s9.val);
-    std::cout << hashTable->toString() << std::endl;
-    hashTable->add(s9.key, s9.val);
-    std::cout << hashTable->toString() << std::endl;
-    hashTable->add(s10.key, s10.val);
+    hashTable->add("zero", 1);
+    assert(hashTable->size() == 1);
+    assert(hashTable->maxSize() == 5);
+    assert(hashTable->find("zero")->val == 1);
+
+    hashTable->remove("zero");
+    assert(hashTable->size() == 0);
+    assert(hashTable->maxSize() == 5);
+    assert(hashTable->find("zero") == nullptr);
+
+    hashTable->add("zero", 0);
+    assert(hashTable->size() == 1);
+    assert(hashTable->find("zero")->val == 0);
+
+    // Test add, overwrite, remove, add: "one" -> 1
+    hashTable->add("one", 1);
+    assert(hashTable->size() == 2);
+    assert(hashTable->maxSize() == 5);
+    assert(hashTable->find("one")->val == 1);
+
+    hashTable->add("one", 2);
+    assert(hashTable->size() == 2);
+    assert(hashTable->maxSize() == 5);
+    assert(hashTable->find("one")->val == 2);
+
+    hashTable->remove("one");
+    assert(hashTable->size() == 1);
+    assert(hashTable->maxSize() == 5);
+    assert(hashTable->find("one") == nullptr);
+
+    hashTable->add("one", 1);
+    assert(hashTable->size() == 2);
+    assert(hashTable->find("one")->val == 1);
+
+    // Test add, overwrite, remove, add: "two" -> 2
+    hashTable->add("two", 2);
+    assert(hashTable->size() == 3);
+    assert(hashTable->maxSize() == 5);
+    assert(hashTable->find("two")->val == 2);
+
+    hashTable->add("two", 3);
+    assert(hashTable->size() == 3);
+    assert(hashTable->maxSize() == 5);
+    assert(hashTable->find("two")->val == 3);
+
+    hashTable->remove("two");
+    assert(hashTable->size() == 2);
+    assert(hashTable->maxSize() == 5);
+    assert(hashTable->find("two") == nullptr);
+
+    hashTable->add("two", 2);
+    assert(hashTable->size() == 3);
+    assert(hashTable->find("two")->val == 2);
+
+    // Test add, overwrite, remove, add: "three" -> 3
+    hashTable->add("three", 3);
+    assert(hashTable->size() == 4);
+    assert(hashTable->maxSize() == 10);
+    assert(hashTable->find("three")->val == 3);
+
+    hashTable->add("three", 4);
+    assert(hashTable->size() == 4);
+    assert(hashTable->maxSize() == 10);
+    assert(hashTable->find("three")->val == 4);
+
+    hashTable->remove("three");
+    assert(hashTable->size() == 3);
+    assert(hashTable->maxSize() == 10);
+    assert(hashTable->find("three") == nullptr);
+
+    hashTable->add("three", 3);
+    assert(hashTable->size() == 4);
+    assert(hashTable->find("three")->val == 3);
+
+    // Test resizeRehash
+    hashTable->add("four", 4);
+    assert(hashTable->size() == 5);
+    assert(hashTable->maxSize() == 10);
+
+    hashTable->add("five", 5);
+    assert(hashTable->size() == 6);
+    assert(hashTable->maxSize() == 10);
+
+    hashTable->add("six", 6);
+    assert(hashTable->size() == 7);
+    assert(hashTable->maxSize() == 10);
+
+    hashTable->add("seven", 7);
+    assert(hashTable->size() == 8);
+    assert(hashTable->maxSize() == 20);
+
+    hashTable->add("eight", 8);
+    assert(hashTable->size() == 9);
+    assert(hashTable->maxSize() == 20);
+
+    hashTable->add("nine", 9);
+    assert(hashTable->size() == 10);
+    assert(hashTable->maxSize() == 20);
+
+    hashTable->add("ten", 10);
+    assert(hashTable->size() == 11);
+    assert(hashTable->maxSize() == 20);
+    
+    // Test long key
+    hashTable->add("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 11);
+    assert(hashTable->size() == 12);
+    assert(hashTable->maxSize() == 20);
+    hashTable->remove("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    assert(hashTable->size() == 11);
+    assert(hashTable->maxSize() == 20);
+
+    // Test find
+    assert(hashTable->find("zero")->val == 0);
+    assert(hashTable->find("one")->val == 1);
+    assert(hashTable->find("two")->val == 2);
+    assert(hashTable->find("three")->val == 3);
+    assert(hashTable->find("four")->val == 4);
+    assert(hashTable->find("five")->val == 5);
+    assert(hashTable->find("six")->val == 6);
+    assert(hashTable->find("seven")->val == 7);
+    assert(hashTable->find("eight")->val == 8);
+    assert(hashTable->find("nine")->val == 9);
+    assert(hashTable->find("ten")->val == 10);
+    assert(hashTable->find("eleven") == nullptr);
+    
+    // Test clear
+    hashTable->clear();
+    assert(hashTable->size() == 0);
+
+    assert(hashTable->find("zero") == nullptr);
+    assert(hashTable->find("one") == nullptr);
+    assert(hashTable->find("two") == nullptr);
+    assert(hashTable->find("three") == nullptr);
+    assert(hashTable->find("four") == nullptr);
+    assert(hashTable->find("five") == nullptr);
+    assert(hashTable->find("six") == nullptr);
+    assert(hashTable->find("seven") == nullptr);
+    assert(hashTable->find("eight") == nullptr);
+    assert(hashTable->find("nine") == nullptr);
+    assert(hashTable->find("ten") == nullptr);
+    assert(hashTable->find("eleven") == nullptr);
+    
+    // Print for 1000000 elements
+    for (int i = 0; i < 1000000; i++) {
+        hashTable->add(generateRandomKey(), generateRandomVal());
+    }
+
     std::cout << hashTable->toString() << std::endl;
 }
