@@ -9,7 +9,7 @@
 #include <functional>
 
 template <typename T>
-struct Linked_list {
+struct LinkedList {
     struct Node {
         Node* next;
         Node* prev;
@@ -24,8 +24,8 @@ struct Linked_list {
 
     int size = 0;
 
-    Linked_list();
-    ~Linked_list();
+    LinkedList();
+    ~LinkedList();
 
     int addFront(T newNodeVal);
     int addBack(T newNodeVal);
@@ -73,16 +73,16 @@ int compare2(const SomeObject& new_obj, const SomeObject& list_obj);
 std::string toStringObj(const SomeObject& obj);
 
 std::string printColumn(std::string value, int width);
-void fillList(int elements, Linked_list <SomeObject>* ll);
+void fillList(int elements, LinkedList <SomeObject>* ll);
 
 template <typename Func>
-std::string measureMethod(Func func, Linked_list <SomeObject>* ll, int elements, bool requiresFill, int width, bool multiRun);
+std::string measureMethod(Func func, LinkedList <SomeObject>* ll, int elements, bool requiresFill, int width, bool multiRun);
 
-void assertTests(Linked_list <SomeObject>* ll);
+void assertTests(LinkedList <SomeObject>* ll);
 
 int main() {
     srand(time(0));
-    Linked_list <SomeObject>* ll = new Linked_list <SomeObject>();
+    LinkedList <SomeObject>* ll = new LinkedList <SomeObject>();
 
     // Small correctness check
     assertTests(ll);
@@ -140,20 +140,20 @@ int main() {
 }
 
 template <typename T>
-Linked_list<T>::Linked_list() {
+LinkedList<T>::LinkedList() {
     dummy = new Node(T());
     dummy->next = dummy;
     dummy->prev = dummy;
 }
 
 template <typename T>
-Linked_list<T>::~Linked_list() {
+LinkedList<T>::~LinkedList() {
     clear();
     delete dummy;
 }
 
 template <typename T>
-int Linked_list<T>::addFront(T newNodeVal) {
+int LinkedList<T>::addFront(T newNodeVal) {
     Node* newNode = createNewNode(newNodeVal);
     if (newNode == nullptr) return FAIL;
     addNodeFront(newNode, dummy);
@@ -161,7 +161,7 @@ int Linked_list<T>::addFront(T newNodeVal) {
 }
 
 template <typename T>
-int Linked_list<T>::addBack(T newNodeVal) {
+int LinkedList<T>::addBack(T newNodeVal) {
     Node* newNode = createNewNode(newNodeVal);
     if (newNode == nullptr) return FAIL;
     addNodeBack(newNode, dummy);
@@ -169,17 +169,17 @@ int Linked_list<T>::addBack(T newNodeVal) {
 }
 
 template <typename T>
-int Linked_list<T>::removeFront() {
+int LinkedList<T>::removeFront() {
     return removeNode(dummy->next);
 }
 
 template <typename T>
-int Linked_list<T>::removeBack() {
+int LinkedList<T>::removeBack() {
     return removeNode(dummy->prev);
 }
 
 template <typename T>
-T& Linked_list<T>::at(int index) const {
+T& LinkedList<T>::at(int index) const {
     if (index >= size || index < 0) {
         throw std::out_of_range("Index out of range");
     }
@@ -191,18 +191,18 @@ T& Linked_list<T>::at(int index) const {
 }
 
 template <typename T>
-void Linked_list<T>::set(int index, T newValue) {
+void LinkedList<T>::set(int index, T newValue) {
     at(index) = newValue;
 }
 
 template <typename T>
-T& Linked_list<T>::operator[](int index) {
+T& LinkedList<T>::operator[](int index) {
     return at(index);
 }
 
 template <typename T>
 template <typename A>
-T* Linked_list<T>::find(A searched, int (*cmp)(const A&, const T&)) const {
+T* LinkedList<T>::find(A searched, int (*cmp)(const A&, const T&)) const {
     Node* find = findNode(searched, cmp);
     
     if (find != nullptr) return &(find->val);
@@ -212,7 +212,7 @@ T* Linked_list<T>::find(A searched, int (*cmp)(const A&, const T&)) const {
 
 template <typename T>
 template <typename A>
-int Linked_list<T>::findRemove(A searched, int (*cmp)(const A&, const T&)) {
+int LinkedList<T>::findRemove(A searched, int (*cmp)(const A&, const T&)) {
     Node* node = findNode(searched, cmp);
 
     if (node != nullptr) {
@@ -224,7 +224,7 @@ int Linked_list<T>::findRemove(A searched, int (*cmp)(const A&, const T&)) {
 }
 
 template <typename T>
-int Linked_list<T>::insertOrdered(T newNodeVal, int (*cmp)(const T&, const T&)) {
+int LinkedList<T>::insertOrdered(T newNodeVal, int (*cmp)(const T&, const T&)) {
     Node* newNode = createNewNode(newNodeVal);
     if (newNode == nullptr) return FAIL;
 
@@ -237,14 +237,14 @@ int Linked_list<T>::insertOrdered(T newNodeVal, int (*cmp)(const T&, const T&)) 
 }
 
 template <typename T>
-void Linked_list<T>::clear() {
+void LinkedList<T>::clear() {
     while (dummy->next != dummy) {
         removeNode(dummy->next);
     }
 }
 
 template <typename T>
-std::string Linked_list<T>::toString(std::string (*toStringObj)(const T&)) const {
+std::string LinkedList<T>::toString(std::string (*toStringObj)(const T&)) const {
     Node* curr = dummy->next;
 
     std::string str = "[";
@@ -260,7 +260,7 @@ std::string Linked_list<T>::toString(std::string (*toStringObj)(const T&)) const
 }
 
 template <typename T>
-typename Linked_list<T>::Node* Linked_list<T>::createNewNode(T newNodeVal) {
+typename LinkedList<T>::Node* LinkedList<T>::createNewNode(T newNodeVal) {
     try {
         return new Node(newNodeVal);
     }
@@ -270,7 +270,7 @@ typename Linked_list<T>::Node* Linked_list<T>::createNewNode(T newNodeVal) {
 }
 
 template <typename T>
-void Linked_list<T>::addNodeFront(Linked_list<T>::Node* newNode, Linked_list<T>::Node* node) {
+void LinkedList<T>::addNodeFront(LinkedList<T>::Node* newNode, LinkedList<T>::Node* node) {
     newNode->next = node->next;
     newNode->prev = node;
     newNode->next->prev = newNode;
@@ -279,7 +279,7 @@ void Linked_list<T>::addNodeFront(Linked_list<T>::Node* newNode, Linked_list<T>:
 }
 
 template <typename T>
-void Linked_list<T>::addNodeBack(Linked_list<T>::Node* newNode, Linked_list<T>::Node* node) {
+void LinkedList<T>::addNodeBack(LinkedList<T>::Node* newNode, LinkedList<T>::Node* node) {
     newNode->prev = node->prev;
     newNode->next = node;
     newNode->prev->next = newNode;
@@ -288,7 +288,7 @@ void Linked_list<T>::addNodeBack(Linked_list<T>::Node* newNode, Linked_list<T>::
 }
 
 template <typename T>
-int Linked_list<T>::removeNode(Linked_list<T>::Node* node) {
+int LinkedList<T>::removeNode(LinkedList<T>::Node* node) {
     if (node != dummy) {
         node->prev->next = node->next;
         node->next->prev = node->prev;
@@ -300,7 +300,7 @@ int Linked_list<T>::removeNode(Linked_list<T>::Node* node) {
 }
 
 template <typename T>
-T& Linked_list<T>::getFromIndexFront(int index) const {
+T& LinkedList<T>::getFromIndexFront(int index) const {
     Node* curr = dummy->next;
     for (int i = 0; i < index; i++) {
         curr = curr->next;
@@ -309,7 +309,7 @@ T& Linked_list<T>::getFromIndexFront(int index) const {
 }
 
 template <typename T>
-T& Linked_list<T>::getFromIndexBack(int index) const {
+T& LinkedList<T>::getFromIndexBack(int index) const {
     Node* curr = dummy->prev;
     for (int i = 0; i < index; i++) {
         curr = curr->prev;
@@ -320,7 +320,7 @@ T& Linked_list<T>::getFromIndexBack(int index) const {
 
 template <typename T>
 template <typename A>
-typename Linked_list<T>::Node* Linked_list<T>::findNode(A search, int (*cmp)(const A&, const T&)) const {
+typename LinkedList<T>::Node* LinkedList<T>::findNode(A search, int (*cmp)(const A&, const T&)) const {
     Node* curr = dummy->next;
 
     while (curr != dummy) {
@@ -361,14 +361,14 @@ std::string printColumn(std::string value, int width) {
     return value;
 }
 
-void fillList(int elements, Linked_list <SomeObject>* ll) {
+void fillList(int elements, LinkedList <SomeObject>* ll) {
     for (int i = 0; i < elements; i++) {
         ll->addFront(createRandom());
     }
 }
 
 template <typename Func>
-std::string measureMethod(Func func, Linked_list <SomeObject>* ll, int elements, bool requiresFill, int width, bool multiRun) {
+std::string measureMethod(Func func, LinkedList <SomeObject>* ll, int elements, bool requiresFill, int width, bool multiRun) {
     if (requiresFill) fillList(elements, ll);
     clock_t t1 = clock();
     if (multiRun) {
@@ -386,7 +386,7 @@ std::string measureMethod(Func func, Linked_list <SomeObject>* ll, int elements,
     return printColumn(strTime, width);
 }
 
-void assertTests(Linked_list <SomeObject>* ll) {
+void assertTests(LinkedList <SomeObject>* ll) {
     SomeObject s0 = { 0, 'a' };
     SomeObject s1 = { 1, 'b' };
     SomeObject s2 = { 2, 'c' };
