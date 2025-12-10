@@ -12,7 +12,7 @@ int validatedStoi(char* arg) {
 }
 
 char* fillArgs(int size, int firstIndex, char** argv) {
-    int stringLen = 0;
+    int stringLen = strlen(argv[0]) + 1;
     for (int i = 0; i < size; i++) {
         stringLen += strlen(argv[firstIndex + i]) + 1;
     }
@@ -21,8 +21,15 @@ char* fillArgs(int size, int firstIndex, char** argv) {
     if (!args) return NULL;
 
     char* ptrToEnd = args;
+
+    char* ptrCurrArg = argv[0];
+    while (*ptrCurrArg) {
+        *(ptrToEnd++) = *(ptrCurrArg++);
+    }
+    *(ptrToEnd++) = ' ';
+
     for (int i = 0; i < size; i++) {
-        char* ptrCurrArg = argv[firstIndex + i];
+        ptrCurrArg = argv[firstIndex + i];
         while (*ptrCurrArg) {
             *(ptrToEnd++) = *(ptrCurrArg++);
         }
@@ -48,7 +55,7 @@ void printArgs(char** args) {
 }
 
 int main(int argc, char **argv) {
-    printf("%s\n", argv[0]);
+    printf("%d\n", argc);
     if (argc < 2) {
         fprintf(stderr, "The program requires at least one argument.\n");
         return 201;
@@ -92,7 +99,7 @@ int main(int argc, char **argv) {
     si1.cb = sizeof(si1);
 
     if (CreateProcessA(
-        argv[0], // char *lpApplicationName
+        NULL, // char *lpApplicationName
         argsL, // char *lpCommandLine
         NULL, // SECURITY_ATTRIBUTES *lpProcessAttributes
         NULL, // SECURITY_ATTRIBUTES *lpThreadAttributes
@@ -114,7 +121,7 @@ int main(int argc, char **argv) {
     si2.cb = sizeof(si2);
 
     if (CreateProcessA(
-        argv[0], // char *lpApplicationName
+        NULL, // char *lpApplicationName
         argsR, // char *lpCommandLine
         NULL, // SECURITY_ATTRIBUTES *lpProcessAttributes
         NULL, // SECURITY_ATTRIBUTES *lpThreadAttributes
