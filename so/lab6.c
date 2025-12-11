@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <windows.h>
 
 int validatedStoi(char* arg) {
@@ -42,20 +43,14 @@ char* fillArgs(int size, int firstIndex, char** argv) {
     return args;
 }
 
-void printArgs(char** args) {
-    args++;
-
-    int first = 1;
+void printArgs(char* args) {
+    while (*args++ != ' ');
     printf("[");
-    while (*args) {
-        if (!first) { printf(", %s", *args++); }
-        else { printf("%s", *args++); first = 0; }
-    }
+    printf("%s", args);
     printf("]");
 }
 
 int main(int argc, char **argv) {
-    printf("%d\n", argc);
     if (argc < 2) {
         fprintf(stderr, "The program requires at least one argument.\n");
         return 201;
@@ -81,84 +76,75 @@ int main(int argc, char **argv) {
     int sizeR = argc / 2;
     int sizeL = argc - sizeR - 1;
 
-    char* argsL = fillArgs(sizeL, 1, argv);
-    printf("%s\n", argsL);
-    char* argsR = fillArgs(sizeR, sizeL + 1, argv);
-    printf("%s\n", argsR);
-    if (!argsL || !argsR ) {
+    char* args[2];
+
+    args[0] = fillArgs(sizeL, 1, argv);
+    args[1] = fillArgs(sizeR, sizeL + 1, argv);
+    if (!args[0] || !args[1] ) {
         fprintf(stderr, "Malloc failed.");
-        free(argsL);
-        free(argsR);
+        free(args[0]); free(args[1]);
         return 203;
     }
 
-    STARTUPINFOA si1;
-    PROCESS_INFORMATION pi1;
-    memset(&si1, 0, sizeof(si1));
-    memset(&pi1, 0, sizeof(pi1));
-    si1.cb = sizeof(si1);
+    STARTUPINFOA si[2];
+    PROCESS_INFORMATION pi[2];
 
-    if (CreateProcessA(
-        NULL, // char *lpApplicationName
-        argsL, // char *lpCommandLine
-        NULL, // SECURITY_ATTRIBUTES *lpProcessAttributes
-        NULL, // SECURITY_ATTRIBUTES *lpThreadAttributes
-        0, // int bInheritHandles
-        0, // int dwCreationFlags
-        NULL, // void *lpEnvironment
-        NULL, // char *lpCurrentDirectory
-        &si1, // STARTUPINFOA *lpStartupInfo
-        &pi1// PPROCESS_INFORMATION *lpProcessInformation
-    ) == 0) {
-        printf( "CreateProcess #%d failed (%d).\n", 1, GetLastError() );
-        return 204;
-    };
-
-    STARTUPINFOA si2;
-    PROCESS_INFORMATION pi2;
-    memset(&si2, 0, sizeof(si2));
-    memset(&pi2, 0, sizeof(pi2));
-    si2.cb = sizeof(si2);
-
-    if (CreateProcessA(
-        NULL, // char *lpApplicationName
-        argsR, // char *lpCommandLine
-        NULL, // SECURITY_ATTRIBUTES *lpProcessAttributes
-        NULL, // SECURITY_ATTRIBUTES *lpThreadAttributes
-        0, // int bInheritHandles
-        0, // int dwCreationFlags
-        NULL, // void *lpEnvironment
-        NULL, // char *lpCurrentDirectory
-        &si2, // STARTUPINFOA *lpStartupInfo
-        &pi2// PPROCESS_INFORMATION *lpProcessInformation
-    ) == 0) {
-        printf( "CreateProcess #%d failed (%d).\n", 2, GetLastError() );
-        return 204;
-    };
-
-    // if (id1 == 0) execv(argv[0], argsL);
-    // pid_t id2 = fork();
-    // if (id2 == 0) execv(argv[0], argsR);
-
-    // pid_t parentId = getpid();
-    // int status1, child1 = waitpid(id1, &status1, 0);
-    // int status2, child2 = waitpid(id2, &status2, 0);
-    // if (WIFEXITED(status1)) status1 = WEXITSTATUS(status1);
-    // if (WIFEXITED(status2)) status2 = WEXITSTATUS(status2);
-
-    // printf("P: %d, Ch1: %d, Res: %d, Args: ", parentId, child1, status1);
-    // printArgs(argsL);
-    // printf("\n");
-
-    // printf("P: %d, Ch2: %d, Res: %d, Args: ", parentId, child2, status2);
-    // printArgs(argsR);
-    // printf("\n");
-
-    // int maxStatus = (status1 > status2 ? status1 : status2);
-    // printf("P: %d, Res: %d\n\n", parentId, maxStatus);
-
-    // free(argsL);
-    // free(argsR);
+    for (int i = 0; i < 2; i++) {
+        memset(&si[i], 0, sizeof(si[i]));
+        memset(&pi[i], 0, sizeof(pi[i]));
+        si[i].cb = sizeof(si[i]);
     
-    return 1;
+        if (CreateProcessA(
+            NULL, // char *lpApplicationName
+            args[i], // char *lpCommandLine
+            NULL, // SECURITY_ATTRIBUTES *lpProcessAttributes
+            NULL, // SECURITY_ATTRIBUTES *lpThreadAttributes
+            0, // int bInheritHandles
+            0, // int dwCreationFlags
+            NULL, // void *lpEnvironment
+            NULL, // char *lpCurrentDirectory
+            &si[i], // STARTUPINFOA *lpStartupInfo
+            &pi[i]// PPROCESS_INFORMATION *lpProcessInformation
+        ) == 0) {
+            printf( "CreateProcess #%d failed (%lu).\n", i + 1, GetLastError() );
+            free(args[0]); free(args[1]);
+            return 204;
+        };
+    }
+
+    HANDLE children[2] = { pi[0].hProcess, pi[1].hProcess };
+    WaitForMultipleObjects(2, children, 1, INFINITE);
+    
+    DWORD parentId = GetCurrentProcessId();
+    DWORD code[2] = { 0, 0 };
+    int status[2];
+
+    for (int i = 0; i < 2; i++) {
+        GetExitCodeProcess(pi[i].hProcess, &code[i]);
+
+        CloseHandle( pi[i].hProcess );
+        CloseHandle( pi[i].hThread );
+        
+        if (code[i] == STILL_ACTIVE) {
+            fprintf(stderr, "Something went wrong with waiting for child #%d.\n", i + 1);
+            free(args[0]); free(args[1]);
+            if (i == 0) {
+                CloseHandle( pi[1].hProcess );
+                CloseHandle( pi[1].hThread );
+            }
+            return 205;
+        }
+        status[i] = (int)code[i];
+    
+        printf("P: %lu, Ch%d: %lu, Res: %d, Args: ", parentId, i + 1, pi[i].dwProcessId, status[i]);
+        printArgs(args[i]);
+        printf("\n");
+    }
+
+    int maxStatus = (status[0] > status[1] ? status[0] : status[1]);
+    printf("P: %lu, Res: %d\n\n", parentId, maxStatus);
+
+    free(args[0]); free(args[1]);
+    
+    return maxStatus;
 }
