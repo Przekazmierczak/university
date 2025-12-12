@@ -86,13 +86,13 @@ int main(int argc, char **argv) {
         return 203;
     }
 
-    STARTUPINFOA si[2];
+    STARTUPINFOA si;
+    memset(&si, 0, sizeof(si));
+    si.cb = sizeof(si);
     PROCESS_INFORMATION pi[2];
 
     for (int i = 0; i < 2; i++) {
-        memset(&si[i], 0, sizeof(si[i]));
         memset(&pi[i], 0, sizeof(pi[i]));
-        si[i].cb = sizeof(si[i]);
     
         if (CreateProcessA(
             NULL, // char *lpApplicationName
@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
             0, // int dwCreationFlags
             NULL, // void *lpEnvironment
             NULL, // char *lpCurrentDirectory
-            &si[i], // STARTUPINFOA *lpStartupInfo
+            &si, // STARTUPINFOA *lpStartupInfo
             &pi[i]// PPROCESS_INFORMATION *lpProcessInformation
         ) == 0) {
             printf( "CreateProcess #%d failed (%lu).\n", i + 1, GetLastError() );
