@@ -25,7 +25,8 @@ struct Edge {
     float weight;
 
     Edge() {}
-    Edge(size_t inputNode1, size_t inputNode2, float inputWeight) : node1(inputNode1), node2(inputNode2), weight(inputWeight) {}
+    Edge(size_t inputNode1, size_t inputNode2, float inputWeight)
+        : node1(inputNode1), node2(inputNode2), weight(inputWeight) {}
 };
 
 struct Graf {
@@ -42,6 +43,179 @@ struct Graf {
     long pickPivot(long left, long right, long mid);
     void edgesSwap(long left, long right);
 };
+
+struct UnionFind {
+    size_t size;
+
+    DynamicArray<int> parents;
+    DynamicArray<int> ranks;
+
+    UnionFind(size_t inputSize)
+        : size(inputSize), parents(inputSize), ranks(inputSize) {
+            for (int i = 0; i < inputSize; i++) {
+                parents[i] = i;
+                ranks[i] = 0;
+            }
+        }
+
+    void defaultUnion(size_t parent1, size_t parent2) {
+        parents[parent1] = parent2;
+    }
+
+    void unionByRank(size_t parent1, size_t parent2) {
+        if (ranks[parent1] > ranks[parent2]) {
+            parents[parent2] = parent1;
+        } else if (ranks[parent1] < ranks[parent2]) {
+            parents[parent1] = parent2;
+        } else {
+            parents[parent1] = parent2;
+            ranks[parent2]++;
+        }
+    }
+
+    size_t find(size_t index) {
+        while (parents[index] != index) {
+            index = parents[index];
+        }
+        return index;
+    }
+
+    size_t findWithCompression(size_t index) {
+        size_t root = index;
+
+        while (parents[root] != root) {
+            root = parents[root];
+        }
+
+        while (parents[index] != index) {
+            size_t prevIndex = index;
+            index = parents[index];
+            parents[prevIndex] = root;
+        }
+
+        return root;
+    }
+};
+
+DynamicArray<Edge> kruskal(Graf graf, bool unionByRank, bool findWithCompression) {
+    UnionFind unionFind(graf.size);
+    DynamicArray<Edge> result(graf.size - 1);
+
+    graf.sort();
+    size_t count = 0;
+    for (size_t i = 0; i < graf.edgesSize; i++) {
+        size_t parent1;
+        size_t parent2;
+        if (findWithCompression) {
+            parent1 = unionFind.findWithCompression(graf.edges[i].node1);
+            parent2 = unionFind.findWithCompression(graf.edges[i].node2);
+        } else {
+            parent1 = unionFind.find(graf.edges[i].node1);
+            parent2 = unionFind.find(graf.edges[i].node2);
+        }
+
+        if (parent1 != parent2) {
+            result[count++] = graf.edges[i];
+            if (unionByRank) {
+                unionFind.unionByRank(parent1, parent2);
+            } else {
+                unionFind.defaultUnion(parent1, parent2);
+            }
+        }
+    }
+
+    return result;
+}
+
+int getSize_t (std::string s, size_t& val);
+int getFloat (std::string s, float& val);
+int createGraf(Graf& graf, std::string fileName);
+
+int main() {
+    std::string fileName = "g1.txt";
+    Graf graf;
+
+    if (createGraf(graf, fileName)) return 1;
+
+    DynamicArray<Edge> result = kruskal(graf, true, true);
+
+    // for (size_t i = 0; i < graf.size; i++) {
+    //     std::cout << "x: " << graf.nodes[i].x << ", y: " << graf.nodes[i].y << std::endl;
+    // }
+
+    // for (size_t i = 0; i < graf.edgesSize; i++) {
+    //     std::cout << "node1: " << graf.edges[i].node1 << ", node2: " << graf.edges[i].node2 << ", weight: "<< graf.edges[i].weight << std::endl;
+    // }
+
+    for (size_t i = 0; i < result.size(); i++) {
+        std::cout << "node1: " << result[i].node1 << ", node2: " << result[i].node2 << std::endl;
+    }
+
+    return 0;
+}
+
+void Graf::quickSort(long left, long right) {
+    if (left >= right) {
+        return;
+    }
+
+    long mid = left + (right - left) / 2;
+    long newPivot = pickPivot(left, right, mid);
+
+    if (newPivot != right) {
+        edgesSwap(newPivot, right);
+    }
+
+    float pivotWeight = edges[right].weight;
+    long currLeft = left;
+    long currRight = right - 1;
+
+    while (currLeft <= currRight) {
+        if (edges[currLeft].weight < pivotWeight) {
+            currLeft++;
+            continue;
+        }
+        if (edges[currRight].weight > pivotWeight) {
+            currRight--;
+            continue;
+        }
+        edgesSwap(currLeft, currRight);
+        currLeft++;
+        currRight--;
+    }
+
+    edgesSwap(currLeft, right);
+
+    quickSort(left, currLeft - 1);
+    quickSort(currLeft + 1, right);
+}
+
+long Graf::pickPivot(long left, long right, long mid) {
+    long small;
+    long big;
+
+    if (edges[left].weight > edges[right].weight) {
+        small = right;
+        big = left;
+    } else {
+        small = left;
+        big = right;
+    }
+
+    if (edges[mid].weight > edges[big].weight) {
+        return big;
+    } else if (edges[mid].weight < edges[small].weight) {
+        return small;
+    }
+
+    return mid;
+}
+
+void Graf::edgesSwap(long left, long right) {
+    Edge temp = edges[right];
+    edges[right] = edges[left];
+    edges[left] = temp;
+}
 
 int getSize_t (std::string s, size_t& val) {
     try {
@@ -127,86 +301,4 @@ int createGraf(Graf& graf, std::string fileName) {
     file.close();
 
     return 0;
-}
-
-int main() {
-    std::string fileName = "g1.txt";
-    Graf graf;
-
-    if (createGraf(graf, fileName)) return 1;
-
-    graf.sort();
-
-    for (size_t i = 0; i < graf.size; i++) {
-        std::cout << "x: " << graf.nodes[i].x << ", y: " << graf.nodes[i].y << std::endl;
-    }
-
-    for (size_t i = 0; i < graf.edgesSize; i++) {
-        std::cout << "node1: " << graf.edges[i].node1 << ", node2: " << graf.edges[i].node2 << ", weight: "<< graf.edges[i].weight << std::endl;
-    }
-
-    return 0;
-}
-
-void Graf::quickSort(long left, long right) {
-    if (left >= right) {
-        return;
-    }
-
-    long mid = left + (right - left) / 2;
-    long newPivot = pickPivot(left, right, mid);
-
-    if (newPivot != right) {
-        edgesSwap(newPivot, right);
-    }
-
-    float pivotWeight = edges[right].weight;
-    long currLeft = left;
-    long currRight = right - 1;
-
-    while (currLeft <= currRight) {
-        if (edges[currLeft].weight < pivotWeight) {
-            currLeft++;
-            continue;
-        }
-        if (edges[currRight].weight > pivotWeight) {
-            currRight--;
-            continue;
-        }
-        edgesSwap(currLeft, currRight);
-        currLeft++;
-        currRight--;
-    }
-
-    edgesSwap(currLeft, right);
-
-    quickSort(left, currLeft - 1);
-    quickSort(currLeft + 1, right);
-}
-
-long Graf::pickPivot(long left, long right, long mid) {
-    long small;
-    long big;
-
-    if (edges[left].weight > edges[right].weight) {
-        small = right;
-        big = left;
-    } else {
-        small = left;
-        big = right;
-    }
-
-    if (edges[mid].weight > edges[big].weight) {
-        return big;
-    } else if (edges[mid].weight < edges[small].weight) {
-        return small;
-    }
-
-    return mid;
-}
-
-void Graf::edgesSwap(long left, long right) {
-    Edge temp = edges[right];
-    edges[right] = edges[left];
-    edges[left] = temp;
 }
