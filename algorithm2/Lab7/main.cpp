@@ -1,13 +1,9 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-#include <cstdlib>
-
 // #include <cassert>
-// #include <ctime>
-// #include <cmath>
-// #include <time.h>
-// #include <functional>
+#include <chrono>
+#include <iomanip>
 
 #include "DynamicArray.h"
 
@@ -36,7 +32,12 @@ struct Graf {
     DynamicArray<Node> nodes;
     DynamicArray<Edge> edges;
 
-    void sort() { quickSort(0, edgesSize - 1); }
+    // It is not allowed to copy and assign graf - I never made copy a constructor for DynamicArray :(
+    Graf() = default; 
+    Graf(const Graf&) = delete;
+    Graf& operator=(const Graf&) = delete;
+
+    void sort();
 
     private:
     void quickSort(long left, long right);
@@ -46,112 +47,64 @@ struct Graf {
 
 struct UnionFind {
     size_t size;
+    long findCounter = 0;
 
-    DynamicArray<int> parents;
-    DynamicArray<int> ranks;
+    DynamicArray<size_t> parents;
+    DynamicArray<size_t> ranks;
 
-    UnionFind(size_t inputSize)
-        : size(inputSize), parents(inputSize), ranks(inputSize) {
-            for (int i = 0; i < inputSize; i++) {
-                parents[i] = i;
-                ranks[i] = 0;
-            }
-        }
+    UnionFind(size_t inputSize);
 
-    void defaultUnion(size_t parent1, size_t parent2) {
-        parents[parent1] = parent2;
-    }
-
-    void unionByRank(size_t parent1, size_t parent2) {
-        if (ranks[parent1] > ranks[parent2]) {
-            parents[parent2] = parent1;
-        } else if (ranks[parent1] < ranks[parent2]) {
-            parents[parent1] = parent2;
-        } else {
-            parents[parent1] = parent2;
-            ranks[parent2]++;
-        }
-    }
-
-    size_t find(size_t index) {
-        while (parents[index] != index) {
-            index = parents[index];
-        }
-        return index;
-    }
-
-    size_t findWithCompression(size_t index) {
-        size_t root = index;
-
-        while (parents[root] != root) {
-            root = parents[root];
-        }
-
-        while (parents[index] != index) {
-            size_t prevIndex = index;
-            index = parents[index];
-            parents[prevIndex] = root;
-        }
-
-        return root;
-    }
+    void defaultUnion(size_t parent1, size_t parent2);
+    void unionByRank(size_t parent1, size_t parent2);
+    size_t find(size_t index);
+    size_t findWithCompression(size_t index);
 };
 
-DynamicArray<Edge> kruskal(Graf graf, bool unionByRank, bool findWithCompression) {
-    UnionFind unionFind(graf.size);
-    DynamicArray<Edge> result(graf.size - 1);
+struct Kruskal {
+    Graf& graf;
+    UnionFind unionFind;
 
-    graf.sort();
-    size_t count = 0;
-    for (size_t i = 0; i < graf.edgesSize; i++) {
-        size_t parent1;
-        size_t parent2;
-        if (findWithCompression) {
-            parent1 = unionFind.findWithCompression(graf.edges[i].node1);
-            parent2 = unionFind.findWithCompression(graf.edges[i].node2);
-        } else {
-            parent1 = unionFind.find(graf.edges[i].node1);
-            parent2 = unionFind.find(graf.edges[i].node2);
-        }
+    bool unionByRank;
+    bool pathCompression;
 
-        if (parent1 != parent2) {
-            result[count++] = graf.edges[i];
-            if (unionByRank) {
-                unionFind.unionByRank(parent1, parent2);
-            } else {
-                unionFind.defaultUnion(parent1, parent2);
-            }
-        }
-    }
+    DynamicArray<Edge> MST;
+    double MSTSum = 0;
+    double sortTime;
+    double mainLoopTime;
 
-    return result;
-}
+    Kruskal(Graf& inputGraf, bool inputUnionByRank, bool inputPathCompression);
+    void printHeadLine();
+    void printStats();
+    std::string getColumn(std::string value, int width, char filling, char last);
+    void printSeparator(int elements,int width);
+};
 
 int getSize_t (std::string s, size_t& val);
 int getFloat (std::string s, float& val);
 int createGraf(Graf& graf, std::string fileName);
 
 int main() {
-    std::string fileName = "g1.txt";
-    Graf graf;
+    std::string fileName[3] = {"g1.txt", "g2.txt", "g3.txt"};
+    bool flagCombinations[4][2] = {{false, false}, {true, false}, {false, true}, {true, true}};
 
-    if (createGraf(graf, fileName)) return 1;
-
-    DynamicArray<Edge> result = kruskal(graf, true, true);
-
-    // for (size_t i = 0; i < graf.size; i++) {
-    //     std::cout << "x: " << graf.nodes[i].x << ", y: " << graf.nodes[i].y << std::endl;
-    // }
-
-    // for (size_t i = 0; i < graf.edgesSize; i++) {
-    //     std::cout << "node1: " << graf.edges[i].node1 << ", node2: " << graf.edges[i].node2 << ", weight: "<< graf.edges[i].weight << std::endl;
-    // }
-
-    for (size_t i = 0; i < result.size(); i++) {
-        std::cout << "node1: " << result[i].node1 << ", node2: " << result[i].node2 << std::endl;
+    for (size_t i = 0; i < 3; i++) {
+        for (size_t j = 0; j < 4; j++) {
+            Graf graf;
+            if (createGraf(graf, fileName[i])) return 1;
+            Kruskal kruskalFF(graf, flagCombinations[j][0], flagCombinations[j][1]);
+            if (j == 0) kruskalFF.printHeadLine();
+            kruskalFF.printStats();
+        }
+        std::cout << std::endl;
     }
-
+    
     return 0;
+}
+
+void Graf::sort() {
+    if (edgesSize > 1) {
+        quickSort(0, edgesSize - 1);
+    }
 }
 
 void Graf::quickSort(long left, long right) {
@@ -215,6 +168,150 @@ void Graf::edgesSwap(long left, long right) {
     Edge temp = edges[right];
     edges[right] = edges[left];
     edges[left] = temp;
+}
+
+UnionFind::UnionFind(size_t inputSize)
+    : size(inputSize), parents(inputSize), ranks(inputSize) {
+        for (int i = 0; i < inputSize; i++) {
+            parents[i] = i;
+            ranks[i] = 0;
+        }
+    }
+
+void UnionFind::defaultUnion(size_t parent1, size_t parent2) {
+    parents[parent1] = parent2;
+}
+
+void UnionFind::unionByRank(size_t parent1, size_t parent2) {
+    if (ranks[parent1] > ranks[parent2]) {
+        parents[parent2] = parent1;
+    } else if (ranks[parent1] < ranks[parent2]) {
+        parents[parent1] = parent2;
+    } else {
+        parents[parent1] = parent2;
+        ranks[parent2]++;
+    }
+}
+
+size_t UnionFind::find(size_t index) {
+    while (parents[index] != index) {
+        index = parents[index];
+        findCounter++;
+    }
+
+    findCounter++;
+
+    return index;
+}
+
+size_t UnionFind::findWithCompression(size_t index) {
+    size_t root = index;
+
+    while (parents[root] != root) {
+        root = parents[root];
+        findCounter++;
+    }
+
+    while (parents[index] != index) {
+        size_t prevIndex = index;
+        index = parents[index];
+        parents[prevIndex] = root;
+    }
+
+    findCounter++;
+
+    return root;
+}
+
+
+Kruskal::Kruskal(Graf& inputGraf, bool inputUnionByRank, bool inputPathCompression)
+    : graf(inputGraf),
+        unionFind(inputGraf.size),
+        unionByRank(inputUnionByRank),
+        pathCompression(inputPathCompression)
+{
+    auto t1 = std::chrono::high_resolution_clock::now();
+    graf.sort();
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    sortTime = std::chrono::duration<double>(t2 - t1).count();
+
+    auto t3 = std::chrono::high_resolution_clock::now();
+    for (size_t i = 0; i < graf.edgesSize; i++) {
+        size_t parent1;
+        size_t parent2;
+        
+        if (pathCompression) {
+            parent1 = unionFind.findWithCompression(graf.edges[i].node1);
+            parent2 = unionFind.findWithCompression(graf.edges[i].node2);
+        } else {
+            parent1 = unionFind.find(graf.edges[i].node1);
+            parent2 = unionFind.find(graf.edges[i].node2);
+        }
+        
+        if (parent1 != parent2) {
+            MST.add(graf.edges[i]);
+            MSTSum += graf.edges[i].weight;
+            if (unionByRank) {
+                unionFind.unionByRank(parent1, parent2);
+            } else {
+                unionFind.defaultUnion(parent1, parent2);
+            }
+        }
+
+        if (MST.size() == graf.size - 1) break;
+    }
+    auto t4 = std::chrono::high_resolution_clock::now();
+
+    mainLoopTime = std::chrono::duration<double>(t4 - t3).count();
+}
+
+void Kruskal::printHeadLine() {
+    const int WIDTH = 17;
+    const int ROWS = 8;
+
+    printSeparator(ROWS, WIDTH);
+    std::string rowsNames[ROWS] = {"Nodes", "Edges", "Union by Rank", "Path compression", "Sum of MST", "Number of find", "Sort Time", "Main loop time"};
+    std::cout << "|";
+    for (size_t i = 0; i < 8; i++) {
+        std::cout << getColumn(rowsNames[i], WIDTH, ' ', '|') << std::flush;
+    }; 
+    std::cout << std::endl;
+    printSeparator(ROWS, WIDTH);
+}
+
+void Kruskal::printStats() {
+    const int WIDTH = 17;
+    const int ROWS = 8;
+    std::string unionByRankString = (unionByRank) ? "True" : "False";
+    std::string pathCompressionString = (pathCompression) ? "True" : "False";
+
+    std::cout << "|";
+    std::cout << getColumn(std::to_string(graf.size), WIDTH, ' ', '|');
+    std::cout << getColumn(std::to_string(graf.edgesSize), WIDTH, ' ', '|');
+    std::cout << getColumn(unionByRankString, WIDTH, ' ', '|');
+    std::cout << getColumn(pathCompressionString, WIDTH, ' ', '|');
+    std::cout << getColumn(std::to_string(MSTSum), WIDTH, ' ', '|');
+    std::cout << getColumn(std::to_string(unionFind.findCounter), WIDTH, ' ', '|');
+    std::cout << getColumn(std::to_string(sortTime), WIDTH, ' ', '|');
+    std::cout << getColumn(std::to_string(mainLoopTime), WIDTH, ' ', '|');
+    std::cout << std::endl;
+    printSeparator(ROWS, WIDTH);
+}
+
+std::string Kruskal::getColumn(std::string value, int width, char filling, char last) {
+    if (value.size() < width) {
+        return std::string(width - value.size(), filling) + value + last;
+    }
+    return value;
+}
+
+void Kruskal::printSeparator(int elements,int width) {
+    std::cout << "+";
+    for (int i = 0; i < elements; i++) {
+        std::cout << getColumn("", width, '-', '+');
+    }
+    std::cout << std::endl;
 }
 
 int getSize_t (std::string s, size_t& val) {
@@ -289,7 +386,7 @@ int createGraf(Graf& graf, std::string fileName) {
         size_t node1;
         if (getSize_t(line.substr(0, position), node1)) return 1;
         size_t node2;
-        if (getSize_t(line.substr(position + 1, position2), node2)) return 1;
+        if (getSize_t(line.substr(position + 1, position2 - position - 1), node2)) return 1;
         float weight;
         if (getFloat(line.substr(position2 + 1), weight)) return 1;
 
