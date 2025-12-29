@@ -32,10 +32,24 @@ struct Graf {
     DynamicArray<Node> nodes;
     DynamicArray<Edge> edges;
 
-    // It is not allowed to copy and assign graf - I never made copy a constructor for DynamicArray :(
-    Graf() = default; 
-    Graf(const Graf&) = delete;
-    Graf& operator=(const Graf&) = delete;
+    Graf() = default;
+
+    Graf(const Graf& other)
+        : size(other.size),
+          edgesSize(other.edgesSize),
+          nodes(other.nodes),
+          edges(other.edges) {}
+
+    Graf& operator=(const Graf& other) {
+        if (this != &other) {
+            size = other.size;
+            edgesSize = other.edgesSize;
+            nodes = other.nodes;
+            edges = other.edges;
+        }
+        return *this;
+    }
+
 
     void sort();
 
@@ -61,7 +75,7 @@ struct UnionFind {
 };
 
 struct Kruskal {
-    Graf& graf;
+    Graf graf;
     UnionFind unionFind;
 
     bool unionByRank;
@@ -72,7 +86,7 @@ struct Kruskal {
     double sortTime;
     double mainLoopTime;
 
-    Kruskal(Graf& inputGraf, bool inputUnionByRank, bool inputPathCompression);
+    Kruskal(Graf inputGraf, bool inputUnionByRank, bool inputPathCompression);
     void printHeadLine();
     void printStats();
     std::string getColumn(std::string value, int width, char filling, char last);
@@ -88,9 +102,9 @@ int main() {
     bool flagCombinations[4][2] = {{false, false}, {true, false}, {false, true}, {true, true}};
 
     for (size_t i = 0; i < 3; i++) {
+        Graf graf;
+        if (createGraf(graf, fileName[i])) return 1;
         for (size_t j = 0; j < 4; j++) {
-            Graf graf;
-            if (createGraf(graf, fileName[i])) return 1;
             Kruskal kruskalFF(graf, flagCombinations[j][0], flagCombinations[j][1]);
             if (j == 0) kruskalFF.printHeadLine();
             kruskalFF.printStats();
@@ -224,11 +238,11 @@ size_t UnionFind::findWithCompression(size_t index) {
 }
 
 
-Kruskal::Kruskal(Graf& inputGraf, bool inputUnionByRank, bool inputPathCompression)
+Kruskal::Kruskal(Graf inputGraf, bool inputUnionByRank, bool inputPathCompression)
     : graf(inputGraf),
-        unionFind(inputGraf.size),
-        unionByRank(inputUnionByRank),
-        pathCompression(inputPathCompression)
+      unionFind(inputGraf.size),
+      unionByRank(inputUnionByRank),
+      pathCompression(inputPathCompression)
 {
     auto t1 = std::chrono::high_resolution_clock::now();
     graf.sort();

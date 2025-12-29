@@ -13,6 +13,35 @@ struct DynamicArray {
     DynamicArray(int currSizeInput, int maxSizeInput) : ratio(2), currSize(currSizeInput), maxSize(maxSizeInput) { array = new T[maxSizeInput]; }
     ~DynamicArray() { delete[] array; }
 
+    DynamicArray(const DynamicArray& other)
+        : ratio(other.ratio),
+          currSize(other.currSize),
+          maxSize(other.maxSize)
+    {
+        array = new T[maxSize];
+        for (size_t i = 0; i < other.currSize; i++) {
+            array[i] = other.array[i];
+        }
+    }
+
+    DynamicArray& operator=(const DynamicArray& other) {
+        if (this != &other) {
+            T* newArray = new T[other.maxSize];
+
+            for (int i = 0; i < other.currSize; ++i) {
+                newArray[i] = other.array[i];
+            }
+
+            delete[] array;
+            array = newArray;
+
+            ratio = other.ratio;
+            currSize = other.currSize;
+            maxSize = other.maxSize;
+        }
+        return *this;
+    }
+
     int size() const { return currSize; }
     int checkMaxSize() const { return maxSize; }
 
