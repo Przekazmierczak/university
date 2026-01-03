@@ -12,7 +12,6 @@ const double EPS = 1e-9;
 struct Point {
     double x, y;
 
-public:
     Point() {}
     Point(double inputX, double inputY) : x(inputX), y(inputY) {}
 };
@@ -22,12 +21,9 @@ struct GrahamScan {
         double x, y;
         size_t index = 0;
 
-    public:
         InnerPoint() {}
         InnerPoint(double inputX, double inputY, size_t inputIndex) : x(inputX), y(inputY),  index(inputIndex){}
-        bool operator==(const Point& other) const {
-            return fabs(x - other.x) < EPS && fabs(y - other.y) < EPS;
-        }
+        bool operator==(const Point& other) const;
     };
 
     DynamicArray<InnerPoint> points;
@@ -35,155 +31,194 @@ struct GrahamScan {
     double sortTime = 0;
     double mainLoopTime = 0;
 
-// private:
+    GrahamScan(DynamicArray<Point> inputPoints);
+    void printResults();
+    
+private:
     InnerPoint startPoint;
     
-public:
-    GrahamScan(DynamicArray<Point> inputPoints) {
-        for (size_t i = 0; i < inputPoints.size(); i++) {
-            points.add(InnerPoint(inputPoints[i].x, inputPoints[i].y, i));
+    InnerPoint findStartPoint();
+    double cross(InnerPoint A, InnerPoint B, InnerPoint C);
+    double distance(InnerPoint A, InnerPoint B);
+    bool compareSort(InnerPoint A, InnerPoint B);
+    bool compareScan(InnerPoint A, InnerPoint B, InnerPoint C);
+
+    void sort();
+    void quickSort(long left, long right);
+    long pickPivot(long left, long right, long mid);
+    void pointsSwap(long left, long right);
+
+    void findConvexHull();
+};
+
+int getSize_t(std::string s, size_t& val);
+int getDouble(std::string s, double& val);
+int getPoints(DynamicArray<Point>& points, std::string fileName);
+void assertTests();
+
+int main() {
+    assertTests();
+
+    std::string fileName[] = {"points1.txt", "points2.txt", "points3.txt", "points4.txt", "points5.txt"};
+    for (size_t i = 0; i < 5; i++) {
+        DynamicArray<Point> points;
+        if (getPoints(points, fileName[i])) return 1;
+        GrahamScan grahamScan = GrahamScan(points);
+        grahamScan.printResults();
+        std::cout << std::endl;
+    }
+
+    return 0;
+}
+
+bool GrahamScan::InnerPoint::operator==(const Point& other) const {
+    return fabs(x - other.x) < EPS && fabs(y - other.y) < EPS;
+}
+
+GrahamScan::GrahamScan(DynamicArray<Point> inputPoints) {
+    for (size_t i = 0; i < inputPoints.size(); i++) {
+        points.add(InnerPoint(inputPoints[i].x, inputPoints[i].y, i));
+    }
+
+    if (points.size() > 0) {
+        startPoint = findStartPoint();
+        
+        auto t1 = std::chrono::high_resolution_clock::now();
+        sort();
+        auto t2 = std::chrono::high_resolution_clock::now();
+        sortTime = std::chrono::duration<double>(t2 - t1).count();
+
+        auto t3 = std::chrono::high_resolution_clock::now();
+        findConvexHull();
+        auto t4 = std::chrono::high_resolution_clock::now();
+        mainLoopTime = std::chrono::duration<double>(t4 - t3).count();
+    }
+}
+
+GrahamScan::InnerPoint GrahamScan::findStartPoint() {
+    InnerPoint currSmallest = points[0];
+    for (size_t i = 1; i < points.size(); i++) {
+        if (points[i].y < currSmallest.y - EPS || (fabs(points[i].y - currSmallest.y) < EPS && points[i].x < currSmallest.x)) {
+            currSmallest = points[i];
         }
-
-        if (points.size() > 0) {
-            startPoint = findStartPoint();
-            
-            auto t1 = std::chrono::high_resolution_clock::now();
-            sort();
-            auto t2 = std::chrono::high_resolution_clock::now();
-            sortTime = std::chrono::duration<double>(t2 - t1).count();
-
-            auto t3 = std::chrono::high_resolution_clock::now();
-            findConvexHull();
-            auto t4 = std::chrono::high_resolution_clock::now();
-            mainLoopTime = std::chrono::duration<double>(t4 - t3).count();
-        }
     }
+    return currSmallest;
+}
 
-    InnerPoint findStartPoint() {
-        InnerPoint currSmallest = points[0];
-        for (size_t i = 1; i < points.size(); i++) {
-            if (points[i].y < currSmallest.y - EPS || (fabs(points[i].y - currSmallest.y) < EPS && points[i].x < currSmallest.x)) {
-                currSmallest = points[i];
-            }
-        }
-        return currSmallest;
-    }
+double GrahamScan::cross(InnerPoint A, InnerPoint B, InnerPoint C) {
+    return ((B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x));
+}
 
-    double cross(InnerPoint A, InnerPoint B, InnerPoint C) {
-        return ((B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x));
-    }
+double GrahamScan::distance(InnerPoint A, InnerPoint B) {
+    double x = B.x - A.x;
+    double y = B.y - A.y;
+    return x * x + y * y;
+}
 
-    double distance(InnerPoint A, InnerPoint B) {
-        double x = B.x - A.x;
-        double y = B.y - A.y;
-        return x * x + y * y;
-    }
-
-    bool compareSort(InnerPoint A, InnerPoint B) {
-        double currCross = cross(startPoint, A, B);
-        if (fabs(currCross) > EPS) return currCross > 0;
-        return distance(A, startPoint) < distance(B, startPoint);
-    }
+bool GrahamScan::compareSort(InnerPoint A, InnerPoint B) {
+    double currCross = cross(startPoint, A, B);
+    if (fabs(currCross) > EPS) return currCross > 0;
+    return distance(A, startPoint) < distance(B, startPoint);
+}
     
-    bool compareScan(InnerPoint A, InnerPoint B, InnerPoint C) {
-        double currCross = cross(A, B, C);
-        if (fabs(currCross) > EPS) return currCross > 0;
-        return distance(B, A) > distance(C, A);
+bool GrahamScan::compareScan(InnerPoint A, InnerPoint B, InnerPoint C) {
+    double currCross = cross(A, B, C);
+    if (fabs(currCross) > EPS) return currCross > 0;
+    return distance(B, A) > distance(C, A);
+}
+
+void GrahamScan::sort() {
+    if (points.size() > 1) {
+        quickSort(0, points.size() - 1);
+    }
+}
+
+void GrahamScan::quickSort(long left, long right) {
+    if (left >= right) {
+        return;
     }
 
-    void sort() {
-        if (points.size() > 1) {
-            quickSort(0, points.size() - 1);
+    long mid = left + (right - left) / 2;
+    long newPivot = pickPivot(left, right, mid);
+
+    pointsSwap(newPivot, right);
+
+    long currLeft = left;
+    long currRight = right - 1;
+
+    double currCross;
+    while (currLeft <= currRight) {
+        while (currLeft <= currRight && compareSort(points[currLeft], points[right])) {
+            currLeft++;
+        }
+        while (currLeft <= currRight && !compareSort(points[currRight], points[right])) {
+            currRight--;
+        }
+        if (currLeft <= currRight) {
+            pointsSwap(currLeft, currRight);
+            currLeft++;
+            currRight--;
         }
     }
 
-    void quickSort(long left, long right) {
-        if (left >= right) {
-            return;
-        }
+    pointsSwap(currLeft, right);
 
-        long mid = left + (right - left) / 2;
-        long newPivot = pickPivot(left, right, mid);
+    quickSort(left, currLeft - 1);
+    quickSort(currLeft + 1, right);
+}
 
-        pointsSwap(newPivot, right);
+long GrahamScan::pickPivot(long left, long right, long mid) {
+    long small;
+    long big;
 
-        long currLeft = left;
-        long currRight = right - 1;
-
-        double currCross;
-        while (currLeft <= currRight) {
-            while (currLeft <= currRight && compareSort(points[currLeft], points[right])) {
-                currLeft++;
-            }
-            while (currLeft <= currRight && !compareSort(points[currRight], points[right])) {
-                currRight--;
-            }
-            if (currLeft <= currRight) {
-                pointsSwap(currLeft, currRight);
-                currLeft++;
-                currRight--;
-            }
-        }
-
-        pointsSwap(currLeft, right);
-
-        quickSort(left, currLeft - 1);
-        quickSort(currLeft + 1, right);
+    if (!compareSort(points[left], points[right])) {
+        small = right;
+        big = left;
+    } else {
+        small = left;
+        big = right;
     }
 
-    long pickPivot(long left, long right, long mid) {
-        long small;
-        long big;
-
-        if (!compareSort(points[left], points[right])) {
-            small = right;
-            big = left;
-        } else {
-            small = left;
-            big = right;
-        }
-
-        if (!compareSort(points[mid], points[big])) {
-            return big;
-        } else if (!compareSort(points[mid], points[small])) {
-            return small;
-        }
-
-        return mid;
+    if (!compareSort(points[mid], points[big])) {
+        return big;
+    } else if (!compareSort(points[mid], points[small])) {
+        return small;
     }
 
-    void pointsSwap(long left, long right) {
-        InnerPoint temp = points[right];
-        points[right] = points[left];
-        points[left] = temp;
-    }
+    return mid;
+}
 
-    void findConvexHull() {
-        for(size_t i = 0; i < points.size(); i++) {
-            while (hull.size() > 1 && !compareScan(hull[hull.size() - 2], hull[hull.size() - 1], points[i])) {
-                hull.remove();
-            }
-            hull.add(points[i]);
-        }
+void GrahamScan::pointsSwap(long left, long right) {
+    InnerPoint temp = points[right];
+    points[right] = points[left];
+    points[left] = temp;
+}
 
-        if (hull.size() == 2 && fabs(distance(hull[0], hull[1])) < EPS) {
+void GrahamScan::findConvexHull() {
+    for(size_t i = 0; i < points.size(); i++) {
+        while (hull.size() > 1 && !compareScan(hull[hull.size() - 2], hull[hull.size() - 1], points[i])) {
             hull.remove();
         }
+        hull.add(points[i]);
     }
 
-    void printResults() {
-        std::cout << "Number of points: " << points.size() << std::endl;
-        std::cout << "Number of points in convex hull: " << hull.size() << std::endl;
-        std::cout << "Indexes: [";
-        for (size_t i = 0; i < hull.size(); i++) {
-            std::cout << hull[i].index;
-            if (i < hull.size() - 1) std::cout<< ", ";
-        }
-        std::cout << "]" << std::endl;
-        std::cout << "Sort time: " << std::to_string(sortTime) << std::endl;
-        std::cout << "Main loop time: " << std::to_string(mainLoopTime) << std::endl;
+    if (hull.size() == 2 && fabs(distance(hull[0], hull[1])) < EPS) {
+        hull.remove();
     }
-};
+}
+
+void GrahamScan::printResults() {
+    std::cout << "Number of points: " << points.size() << std::endl;
+    std::cout << "Number of points in convex hull: " << hull.size() << std::endl;
+    std::cout << "Indexes: [";
+    for (size_t i = 0; i < hull.size(); i++) {
+        std::cout << hull[i].index;
+        if (i < hull.size() - 1) std::cout<< ", ";
+    }
+    std::cout << "]" << std::endl;
+    std::cout << "Sort time: " << std::to_string(sortTime) << std::endl;
+    std::cout << "Main loop time: " << std::to_string(mainLoopTime) << std::endl;
+}
 
 int getSize_t(std::string s, size_t& val) {
     try {
@@ -244,8 +279,6 @@ int getPoints(DynamicArray<Point>& points, std::string fileName) {
 
     return 0;
 }
-
-
 
 void assertTests() {
     DynamicArray<Point> points;
@@ -392,20 +425,3 @@ void assertTests() {
     assert(graham8.hull[2].index == 6);
     assert(graham8.hull[3].index == 3);
 }
-
-
-int main() {
-    assertTests();
-
-    std::string fileName[] = {"points1.txt", "points2.txt", "points3.txt", "points4.txt", "points5.txt"};
-    for (size_t i = 0; i < 5; i++) {
-        DynamicArray<Point> points;
-        if (getPoints(points, fileName[i])) return 1;
-        GrahamScan grahamScan = GrahamScan(points);
-        grahamScan.printResults();
-        std::cout << std::endl;
-    }
-
-    return 0;
-}
-
