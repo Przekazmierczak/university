@@ -11,101 +11,56 @@ const double EPS = 1e-9;
 
 struct Point {
     double x, y;
-    size_t index = 0;
 
 public:
     Point() {}
     Point(double inputX, double inputY) : x(inputX), y(inputY) {}
-    Point(double inputX, double inputY, size_t inputIndex) : x(inputX), y(inputY),  index(inputIndex){}
-    bool operator==(const Point& other) const {
-        return fabs(x - other.x) < EPS && fabs(y - other.y) < EPS;
-    }
 };
 
-int getSize_t(std::string s, size_t& val) {
-    try {
-        val = std::stoul(s);
-        return 0;
-    }
-    catch (const std::invalid_argument& e) {
-        std::cout << "Invalid number: " << e.what() << std::endl;
-    }
-    catch (const std::out_of_range& e) {
-        std::cout << "Number out of range: " << e.what() << std::endl;
-    }
-    return 1;
-}
-
-int getDouble(std::string s, double& val) {
-    try {
-        val = std::stod(s);
-        return 0;
-    }
-    catch (const std::invalid_argument& e) {
-        std::cout << "Invalid number: " << e.what() << std::endl;
-    }
-    return 1;
-}
-
-int getPoints(DynamicArray<Point>& points, std::string fileName) {
-    std::ifstream file(fileName);
-
-    if (!file.is_open()) {
-        std::cerr << "Error opening file\n";
-        return 1;
-    }
-
-    std::string line;
-
-    std::getline(file, line);
-
-    size_t size;
-    if (getSize_t(line, size)) return 1;
-
-    for (size_t i = 0; i < size; i++) {
-        std::getline(file, line);
-
-        size_t position = line.find(' ');
-
-        double x;
-        if (getDouble(line.substr(0, position), x)) return 1;
-        double y;
-        if (getDouble(line.substr(position + 1), y)) return 1;
-
-        Point newNode = Point(x, y);
-
-        points.add(newNode);
-    }
-
-    file.close();
-
-    return 0;
-}
-
 struct GrahamScan {
-    DynamicArray<Point> points;
+    struct InnerPoint {
+        double x, y;
+        size_t index = 0;
 
-    DynamicArray<Point> hull;
+    public:
+        InnerPoint() {}
+        InnerPoint(double inputX, double inputY, size_t inputIndex) : x(inputX), y(inputY),  index(inputIndex){}
+        bool operator==(const Point& other) const {
+            return fabs(x - other.x) < EPS && fabs(y - other.y) < EPS;
+        }
+    };
+
+    DynamicArray<InnerPoint> points;
+    DynamicArray<InnerPoint> hull;
     double sortTime = 0;
     double mainLoopTime = 0;
 
 // private:
-    Point startPoint;
+    InnerPoint startPoint;
     
 public:
-    GrahamScan(DynamicArray<Point> inputPoints)
-        : points(inputPoints)
-    {
+    GrahamScan(DynamicArray<Point> inputPoints) {
+        for (size_t i = 0; i < inputPoints.size(); i++) {
+            points.add(InnerPoint(inputPoints[i].x, inputPoints[i].y, i));
+        }
+
         if (points.size() > 0) {
             startPoint = findStartPoint();
-            saveIndexes();
+            
+            auto t1 = std::chrono::high_resolution_clock::now();
             sort();
+            auto t2 = std::chrono::high_resolution_clock::now();
+            sortTime = std::chrono::duration<double>(t2 - t1).count();
+
+            auto t3 = std::chrono::high_resolution_clock::now();
             findConvexHull();
+            auto t4 = std::chrono::high_resolution_clock::now();
+            mainLoopTime = std::chrono::duration<double>(t4 - t3).count();
         }
     }
 
-    Point findStartPoint() {
-        Point currSmallest = points[0];
+    InnerPoint findStartPoint() {
+        InnerPoint currSmallest = points[0];
         for (size_t i = 1; i < points.size(); i++) {
             if (points[i].y < currSmallest.y - EPS || (fabs(points[i].y - currSmallest.y) < EPS && points[i].x < currSmallest.x)) {
                 currSmallest = points[i];
@@ -114,29 +69,23 @@ public:
         return currSmallest;
     }
 
-    void saveIndexes() {
-        for (size_t i = 0; i < points.size(); i ++) {
-            points[i].index = i;
-        }
-    }
-
-    double cross(Point A, Point B, Point C) {
+    double cross(InnerPoint A, InnerPoint B, InnerPoint C) {
         return ((B.x - A.x) * (C.y - A.y) - (B.y - A.y) * (C.x - A.x));
     }
 
-    double distance(Point A, Point B) {
+    double distance(InnerPoint A, InnerPoint B) {
         double x = B.x - A.x;
         double y = B.y - A.y;
         return x * x + y * y;
     }
 
-    bool compareSort(Point A, Point B) {
+    bool compareSort(InnerPoint A, InnerPoint B) {
         double currCross = cross(startPoint, A, B);
         if (fabs(currCross) > EPS) return currCross > 0;
         return distance(A, startPoint) < distance(B, startPoint);
     }
     
-    bool compareScan(Point A, Point B, Point C) {
+    bool compareScan(InnerPoint A, InnerPoint B, InnerPoint C) {
         double currCross = cross(A, B, C);
         if (fabs(currCross) > EPS) return currCross > 0;
         return distance(B, A) > distance(C, A);
@@ -204,7 +153,7 @@ public:
     }
 
     void pointsSwap(long left, long right) {
-        Point temp = points[right];
+        InnerPoint temp = points[right];
         points[right] = points[left];
         points[left] = temp;
     }
@@ -221,7 +170,82 @@ public:
             hull.remove();
         }
     }
+
+    void printResults() {
+        std::cout << "Number of points: " << points.size() << std::endl;
+        std::cout << "Number of points in convex hull: " << hull.size() << std::endl;
+        std::cout << "Indexes: [";
+        for (size_t i = 0; i < hull.size(); i++) {
+            std::cout << hull[i].index;
+            if (i < hull.size() - 1) std::cout<< ", ";
+        }
+        std::cout << "]" << std::endl;
+        std::cout << "Sort time: " << std::to_string(sortTime) << std::endl;
+        std::cout << "Main loop time: " << std::to_string(mainLoopTime) << std::endl;
+    }
 };
+
+int getSize_t(std::string s, size_t& val) {
+    try {
+        val = std::stoul(s);
+        return 0;
+    }
+    catch (const std::invalid_argument& e) {
+        std::cout << "Invalid number: " << e.what() << std::endl;
+    }
+    catch (const std::out_of_range& e) {
+        std::cout << "Number out of range: " << e.what() << std::endl;
+    }
+    return 1;
+}
+
+int getDouble(std::string s, double& val) {
+    try {
+        val = std::stod(s);
+        return 0;
+    }
+    catch (const std::invalid_argument& e) {
+        std::cout << "Invalid number: " << e.what() << std::endl;
+    }
+    return 1;
+}
+
+int getPoints(DynamicArray<Point>& points, std::string fileName) {
+    std::ifstream file(fileName);
+
+    if (!file.is_open()) {
+        std::cerr << "Error opening file\n";
+        return 1;
+    }
+
+    std::string line;
+
+    std::getline(file, line);
+
+    size_t size;
+    if (getSize_t(line, size)) return 1;
+
+    for (size_t i = 0; i < size; i++) {
+        std::getline(file, line);
+
+        size_t position = line.find(' ');
+
+        double x;
+        if (getDouble(line.substr(0, position), x)) return 1;
+        double y;
+        if (getDouble(line.substr(position + 1), y)) return 1;
+
+        Point newNode = Point(x, y);
+
+        points.add(newNode);
+    }
+
+    file.close();
+
+    return 0;
+}
+
+
 
 void assertTests() {
     DynamicArray<Point> points;
@@ -373,57 +397,15 @@ void assertTests() {
 int main() {
     assertTests();
 
-    std::string fileName = "points1.txt";
-    DynamicArray<Point> points;
-    if (getPoints(points, fileName)) return 1;
-
-    // // for (size_t i = 0; i < points.size(); i++) {
-    // //     std::cout << std::setprecision(9) << "x: " << points[i].x << ", y: " << points[i].y << std::endl;
-    // // }
-
-    // GrahamScan grahamScan = GrahamScan(points);
-
-    // for (size_t i = 0; i < grahamScan.points.size(); i++) {
-    //     std::cout << std::setprecision(9) << "x: " << grahamScan.points[i].x << ", y: " << grahamScan.points[i].y << std::endl;
-    // }
-
-    // // std::cout << "x = " << grahamScan.startPoint.x << ", y = " << grahamScan.startPoint.y << std::endl;
-
-    // // Point point1 = Point(0.450785905, 0.057055898);
-    // // Point point2 = Point(0.988508463, 0.119079731);
-    // // Point point3 = Point(0.450785905, 0.057055898);
-
-    // // std::cout << grahamScan.cross(point1, point2, point3) << std::endl;
-
-    // for (size_t i = 0; i < grahamScan.hull.size(); i++) {
-    //     std::cout << i + 1 << "- x :" << grahamScan.hull[i].x << ", y: " << grahamScan.hull[i].y << std::endl;
-    // }
-
-    DynamicArray<Point> points2;
-    points2.add(Point(0, 2));
-    // points2.add(Point(0, 2));
-    // points2.add(Point(0, 3));
-    // points2.add(Point(0, 2));
-    // points2.add(Point(2, 0));
-    // points2.add(Point(2, 2));
-    // points2.add(Point(3, 3));
-    // points2.add(Point(3, 3));
-    // points2.add(Point(3, 0));
-    // points2.add(Point(0, 0));
-
-    
-    GrahamScan grahamScan2 = GrahamScan(points2);
-    for (size_t i = 0; i < points2.size(); i++) {
-        std::cout << std::setprecision(9) << "x: " << points2[i].x << ", y: " << points2[i].y << std::endl;
-    }
-    for (size_t i = 0; i < grahamScan2.points.size(); i++) {
-        std::cout << std::setprecision(9) << "x: " << grahamScan2.points[i].x << ", y: " << grahamScan2.points[i].y << std::endl;
-    }
-
-    std::cout << "start - x:  " << grahamScan2.startPoint.x << ", y: " << grahamScan2.startPoint.y << std::endl;
-    for (size_t i = 0; i < grahamScan2.hull.size(); i++) {
-        std::cout << i + 1 << "- x :" << grahamScan2.hull[i].x << ", y: " << grahamScan2.hull[i].y << std::endl;
+    std::string fileName[] = {"points1.txt", "points2.txt", "points3.txt", "points4.txt", "points5.txt"};
+    for (size_t i = 0; i < 5; i++) {
+        DynamicArray<Point> points;
+        if (getPoints(points, fileName[i])) return 1;
+        GrahamScan grahamScan = GrahamScan(points);
+        grahamScan.printResults();
+        std::cout << std::endl;
     }
 
     return 0;
 }
+
