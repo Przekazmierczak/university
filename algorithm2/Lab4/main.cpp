@@ -11,7 +11,7 @@
 #include <vector>
 
 template <typename T>
-struct BST {
+struct BRT {
 private:
     enum Color { BLACK = 0, RED = 1 };
 
@@ -34,15 +34,14 @@ public:
 
     Node* root;
 
-    BST() { root = nullptr; }
-    ~BST() { clear(); }
+    BRT() { root = nullptr; }
+    ~BRT() { clear(); }
 
     int size() const { return treeSize; }
     int height();
 
     int add(T value, int (*cmp)(const T&, const T&));
     Node* find(T value, int (*cmp)(const T&, const T&));
-    // int remove(T value, int (*cmp)(const T&, const T&));
 
     std::vector<T> preorder();
     std::vector<T> inorder();
@@ -122,77 +121,76 @@ std::string toStringObj(const SomeObject& obj);
 std::string getColumn(std::string value, int width, char filling, char last);
 void printSeparator(int numOfMethods,int width);
 
-void fillBST(int elements, BST <SomeObject>* bst);
+void fillBRT(int elements, BRT <SomeObject>* brt);
 
 template <typename Func>
-std::string measureMethod(Func func, BST <SomeObject>* bst, int elements, bool requiresFill, int width, bool multiRun);
+std::string measureMethod(Func func, BRT <SomeObject>* brt, int elements, bool requiresFill, int width, bool multiRun);
 
-void assertTests(BST <SomeObject>* da);
+void assertTests(BRT <SomeObject>* da);
 
 int main() {
     srand(time(0));
-    BST <SomeObject>* bst = new BST <SomeObject>();
+    BRT <SomeObject>* brt = new BRT <SomeObject>();
 
     // Small correctness check
-    assertTests(bst);
+    assertTests(brt);
 
-    // // Maximum order: 9 (int overflow)
-    // int maxOrder = 6;
-    // int columnWidth = 11;
+    // Maximum order: 9 (int overflow)
+    int maxOrder = 6;
+    int columnWidth = 11;
 
-    // struct TestArguments {
-    //     bool enabled;
-    //     std::string name;
-    //     std::function<void()> body;
-    //     bool requiresFill;
-    //     bool multiRun;
-    // };
+    struct TestArguments {
+        bool enabled;
+        std::string name;
+        std::function<void()> body;
+        bool requiresFill;
+        bool multiRun;
+    };
 
-    // // Change first value (enabled) to reduce number of tests
-    // TestArguments testMethods[] = {
-    //     {true, "add()", [bst]() { bst->add(createRandom(), compare); }, false, true},
-    //     {true, "find()", [bst]() { bst->find(createRandom(), compare); }, true, true},
-    //     // {true, "remove()", [bst]() { bst->remove(createRandom(), compare); }, true, true},
-    //     {true, "preorder()", [bst]() { bst->preorder(); }, true, false},
-    //     {true, "inorder()", [bst]() { bst->inorder(); }, true, false},
-    //     {true, "clear()", [bst]() { bst->clear(); }, true, false}
-    // };
+    // Change first value (enabled) to reduce number of tests
+    TestArguments testMethods[] = {
+        {true, "add()", [brt]() { brt->add(createRandom(), compare); }, false, true},
+        {true, "find()", [brt]() { brt->find(createRandom(), compare); }, true, true},
+        {true, "preorder()", [brt]() { brt->preorder(); }, true, false},
+        {true, "inorder()", [brt]() { brt->inorder(); }, true, false},
+        {true, "clear()", [brt]() { brt->clear(); }, true, false}
+    };
 
-    // int countMethodsToPrint = 0;
-    // for (const TestArguments& testMethod : testMethods) {
-    //     if (testMethod.enabled) countMethodsToPrint++;
-    // }
+    int countMethodsToPrint = 0;
+    for (const TestArguments& testMethod : testMethods) {
+        if (testMethod.enabled) countMethodsToPrint++;
+    }
 
-    // printSeparator(countMethodsToPrint, columnWidth);
-    // std::cout << "|" << getColumn("elements", columnWidth, ' ', '|');
-    // for (const TestArguments& testMethod : testMethods) {
-    //     if (testMethod.enabled) std::cout << getColumn(testMethod.name, columnWidth, ' ', '|');
-    // }
-    // std::cout << std::endl;
-    // printSeparator(countMethodsToPrint, columnWidth);
+    printSeparator(countMethodsToPrint, columnWidth);
+    std::cout << "|" << getColumn("elements", columnWidth, ' ', '|');
+    for (const TestArguments& testMethod : testMethods) {
+        if (testMethod.enabled) std::cout << getColumn(testMethod.name, columnWidth, ' ', '|');
+    }
+    std::cout << std::endl;
+    printSeparator(countMethodsToPrint, columnWidth);
 
-    // // performance tests
-    // for (int o = 1; o <= maxOrder; o++) {
-    //     int elements = pow(10, o);
-    //     std::cout << "|" << getColumn(std::to_string(elements), columnWidth, ' ', '|');
-    //     for (const TestArguments& testMethod : testMethods) {
-    //         if (testMethod.enabled) {
-    //             std::cout <<
-    //             measureMethod(testMethod.body, bst, elements,
-    //                           testMethod.requiresFill, columnWidth,
-    //                           testMethod.multiRun)
-    //             << std::flush;
-    //         }
-    //     }
-    //     std::cout << std::endl;
-    // }
-    // printSeparator(countMethodsToPrint, columnWidth);
+    // performance tests
+    for (int o = 1; o <= maxOrder; o++) {
+        int elements = pow(10, o);
+        std::cout << "|" << getColumn(std::to_string(elements), columnWidth, ' ', '|');
+        for (const TestArguments& testMethod : testMethods) {
+            if (testMethod.enabled) {
+                std::cout <<
+                measureMethod(testMethod.body, brt, elements,
+                              testMethod.requiresFill, columnWidth,
+                              testMethod.multiRun)
+                << std::flush;
+            }
+        }
+        std::cout << std::endl;
+    }
+    printSeparator(countMethodsToPrint, columnWidth);
 
-    delete bst;
+    delete brt;
 }
 
 template <typename T>
-int BST<T>::height() {
+int BRT<T>::height() {
     if (!ifHeightUpdated) {
         treeHeight = updateHeight(root);
         ifHeightUpdated = true;
@@ -201,7 +199,7 @@ int BST<T>::height() {
 }
 
 template <typename T>
-typename BST<T>::Node* BST<T>::findUncle(Node* nodeParent) {
+typename BRT<T>::Node* BRT<T>::findUncle(Node* nodeParent) {
     if (nodeParent == nodeParent->parent->left) {
         return nodeParent->parent->right;
     } else {
@@ -210,7 +208,7 @@ typename BST<T>::Node* BST<T>::findUncle(Node* nodeParent) {
 }
 
 template <typename T>
-void BST<T>::rightRotation(Node* node) {
+void BRT<T>::rightRotation(Node* node) {
     Node* parent = node->parent;
 
     if (parent == root) {
@@ -231,7 +229,7 @@ void BST<T>::rightRotation(Node* node) {
 }
 
 template <typename T>
-void BST<T>::leftRotation(Node* node) {
+void BRT<T>::leftRotation(Node* node) {
     Node* parent = node->parent;
 
     if (parent == root) {
@@ -252,7 +250,7 @@ void BST<T>::leftRotation(Node* node) {
 }
 
 template <typename T>
-void BST<T>::rotate(Node* node) {
+void BRT<T>::rotate(Node* node) {
     Node* parent = node->parent;
     Node* grandParent = parent->parent;
 
@@ -279,7 +277,7 @@ void BST<T>::rotate(Node* node) {
 }
 
 template <typename T>
-void BST<T>::fixTree(Node* node) {
+void BRT<T>::fixTree(Node* node) {
     if (node == root) {
         node->color = BLACK;
         return;
@@ -299,7 +297,7 @@ void BST<T>::fixTree(Node* node) {
 }
 
 template <typename T>
-int BST<T>::add(T value, int (*cmp)(const T&, const T&)) {
+int BRT<T>::add(T value, int (*cmp)(const T&, const T&)) {
     Node* newNode = createNewNode(value);
     if (newNode == nullptr) return FAIL;
 
@@ -327,22 +325,12 @@ int BST<T>::add(T value, int (*cmp)(const T&, const T&)) {
 };
 
 template <typename T>
-typename BST<T>::Node* BST<T>::find(T value, int (*cmp)(const T&, const T&)) {
+typename BRT<T>::Node* BRT<T>::find(T value, int (*cmp)(const T&, const T&)) {
     return findHelper(root, value, cmp);
 }
 
-// template <typename T>
-// int BST<T>::remove(T value, int (*cmp)(const T&, const T&)) {
-//     Node* node = find(value, cmp);
-//     if (node == nullptr) return FAIL;
-//     removeNode(node);
-//     treeSize--;
-//     ifHeightUpdated = false;
-//     return SUCCESS;
-// }
-
 template <typename T>
-std::vector<T> BST<T>::preorder() {
+std::vector<T> BRT<T>::preorder() {
     std::vector<T> pre;
     preorderHelper(root, pre);
     return pre;
@@ -350,14 +338,14 @@ std::vector<T> BST<T>::preorder() {
 
 
 template <typename T>
-std::vector<T> BST<T>::inorder() {
+std::vector<T> BRT<T>::inorder() {
     std::vector<T> in;
     inorderHelper(root, in);
     return in;
 }
 
 template <typename T>
-void BST<T>::clear() {
+void BRT<T>::clear() {
     clearHelper(root);
     root = nullptr;
     treeSize = 0;
@@ -366,7 +354,7 @@ void BST<T>::clear() {
 }
 
 template <typename T>
-std::string BST<T>::toString(std::string (*toStringObj)(const T&), bool ifColor, bool ifParent) {
+std::string BRT<T>::toString(std::string (*toStringObj)(const T&), bool ifColor, bool ifParent) {
     if (!root) return "";
 
     // Update height if needed
@@ -408,13 +396,13 @@ std::string BST<T>::toString(std::string (*toStringObj)(const T&), bool ifColor,
 }
 
 template <typename T>
-int BST<T>::updateHeight(Node* curr) {
+int BRT<T>::updateHeight(Node* curr) {
     if (!curr) return -1;
     return std::max(updateHeight(curr->left) + 1, updateHeight(curr->right) + 1);
 }
 
 template <typename T>
-typename BST<T>::Node* BST<T>::createNewNode(T newNodeVal) {
+typename BRT<T>::Node* BRT<T>::createNewNode(T newNodeVal) {
     try {
         return new Node(newNodeVal);
     }
@@ -424,7 +412,7 @@ typename BST<T>::Node* BST<T>::createNewNode(T newNodeVal) {
 }
 
 template <typename T>
-typename BST<T>::Node* BST<T>::findLeaf(T value, int (*cmp)(const T&, const T&)) {
+typename BRT<T>::Node* BRT<T>::findLeaf(T value, int (*cmp)(const T&, const T&)) {
     Node* curr = root;
     Node* prev;
 
@@ -441,7 +429,7 @@ typename BST<T>::Node* BST<T>::findLeaf(T value, int (*cmp)(const T&, const T&))
 }
 
 template <typename T>
-typename BST<T>::Node* BST<T>::findHelper(Node* curr, T value, int (*cmp)(const T&, const T&)) {
+typename BRT<T>::Node* BRT<T>::findHelper(Node* curr, T value, int (*cmp)(const T&, const T&)) {
     if (curr == nullptr) return nullptr;
     int compare = cmp(curr->val, value);
     if (compare == 0) return curr;
@@ -450,7 +438,7 @@ typename BST<T>::Node* BST<T>::findHelper(Node* curr, T value, int (*cmp)(const 
 }
 
 template <typename T>
-void BST<T>::preorderHelper(Node* node, std::vector<T> &pre) {
+void BRT<T>::preorderHelper(Node* node, std::vector<T> &pre) {
     if (!node) return;
     pre.push_back(node->val);
     preorderHelper(node->left, pre);
@@ -458,7 +446,7 @@ void BST<T>::preorderHelper(Node* node, std::vector<T> &pre) {
 }
 
 template <typename T>
-void BST<T>::inorderHelper(Node* node, std::vector<T> &in) {
+void BRT<T>::inorderHelper(Node* node, std::vector<T> &in) {
     if (!node) return;
     inorderHelper(node->left, in);
     in.push_back(node->val);
@@ -466,7 +454,7 @@ void BST<T>::inorderHelper(Node* node, std::vector<T> &in) {
 }
 
 template <typename T>
-void BST<T>::clearHelper(Node* node) {
+void BRT<T>::clearHelper(Node* node) {
     if (!node) return;
     clearHelper(node->left);
     clearHelper(node->right);
@@ -474,7 +462,7 @@ void BST<T>::clearHelper(Node* node) {
 }
 
 template <typename T>
-void BST<T>::addToGraph(
+void BRT<T>::addToGraph(
     Node* curr, int col, int row, int size,
     std::string prefix,
     std::vector<std::vector<std::string>> &treeGraph,
@@ -556,15 +544,15 @@ void printSeparator(int numOfMethods,int width) {
     std::cout << std::endl;
 }
 
-void fillBST(int elements, BST <SomeObject>* bst) {
+void fillBRT(int elements, BRT <SomeObject>* brt) {
     for (int i = 0; i < elements; i++) {
-        bst->add(createRandom(), compare);
+        brt->add(createRandom(), compare);
     }
 }
 
 template <typename Func>
-std::string measureMethod(Func func, BST <SomeObject>* bst, int elements, bool requiresFill, int width, bool multiRun) {
-    if (requiresFill) fillBST(elements, bst);
+std::string measureMethod(Func func, BRT <SomeObject>* brt, int elements, bool requiresFill, int width, bool multiRun) {
+    if (requiresFill) fillBRT(elements, brt);
 
     clock_t t1 = clock();
     if (multiRun) {
@@ -576,7 +564,7 @@ std::string measureMethod(Func func, BST <SomeObject>* bst, int elements, bool r
     }
     clock_t t2 = clock();
 
-    bst->clear();
+    brt->clear();
 
     double currTime = (t2 - t1) / (double)CLOCKS_PER_SEC;
     std:: string strTime = std::to_string(currTime);
@@ -584,323 +572,204 @@ std::string measureMethod(Func func, BST <SomeObject>* bst, int elements, bool r
     return getColumn(strTime + 's', width, ' ', '|');
 }
 
-void assertTests(BST <SomeObject>* bst) {
+void assertTests(BRT <SomeObject>* brt) {
     SomeObject s0 = { 0, 'a' };
-    SomeObject s1 = { 10, 'b' };
-    SomeObject s2 = { 20, 'c' };
-    SomeObject s3 = { 30, 'd' };
-    SomeObject s4 = { 40, 'e' };
-    SomeObject s5 = { 50, 'f' };
-    SomeObject s6 = { 60, 'g' };
-    SomeObject s7 = { 70, 'h' };
-    SomeObject s8 = { 80, 'i' };
-    SomeObject s9 = { 90, 'j' };
-    SomeObject s10 = { 4, 'k' };
-    SomeObject s11 = { 8, 'i' };
+    SomeObject s1 = { 1, 'b' };
+    SomeObject s2 = { 2, 'c' };
+    SomeObject s3 = { 3, 'd' };
+    SomeObject s4 = { 4, 'e' };
+    SomeObject s5 = { 5, 'f' };
+    SomeObject s6 = { 6, 'g' };
+    SomeObject s7 = { 7, 'h' };
+    SomeObject s8 = { 8, 'i' };
+    SomeObject s9 = { 9, 'j' };
+    SomeObject s10 = { 10, 'k' };
+    SomeObject s11 = { 11, 'i' };
 
     std::string print;
     
-    // for (int i = 0; i < 20; i++) {
-    //     bst->add(createRandom(), compare);
-    // }
+    for (int i = 0; i < 50; i++) {
+        brt->add(createRandom(), compare);
+    }
 
-    bst->add(s1, compare);
-    bst->add(s2, compare);
-    bst->add(s3, compare);
-    bst->add(s5, compare);
-    bst->add(s4, compare);
-    bst->add(s6, compare);
-    bst->add(s7, compare);
-    bst->add(s8, compare);
-    bst->add(s10, compare);
-    bst->add(s11, compare);
+    std::cout << brt->toString(toStringObj, true, false) << std::endl;
 
-    std::cout << bst->toString(toStringObj, true, false) << std::endl;
+    brt->clear();
 
-    bst->clear();
-
-//     // ---- Test add() methods ----
-//     assert(bst->root == nullptr);
-//     assert(bst->size() == 0);
-//     assert(bst->height() == -1);
-
-//     print =
-//     "";
-//     assert(bst->toString(toStringObj, false, true) == print);
-
-//     bst->add(s5, compare);
-//     assert(bst->root->val.field_1 == 5);
-//     assert(bst->size() == 1);
-//     assert(bst->height() == 0);
-
-//     print =
-//     "Root--N:(5, f)P:(Null)\n";
-//     assert(bst->toString(toStringObj, false, true) == print);
-
-//     bst->add(s3, compare);
-//     assert(bst->root->val.field_1 == 5);
-//     assert(bst->root->left->val.field_1 == 3);
-//     assert(bst->size() == 2);
-//     assert(bst->height() == 1);
-
-//     print = 
-//     "Root--N:(5, f)P:(Null)\n"
-//     "      L-----N:(3, d)P:(5, f)\n";
-//     assert(bst->toString(toStringObj, false, true) == print);
-
-//     bst->add(s7, compare);
-//     assert(bst->root->val.field_1 == 5);
-//     assert(bst->root->left->val.field_1 == 3);
-//     assert(bst->root->right->val.field_1 == 7);
-//     assert(bst->size() == 3);
-//     assert(bst->height() == 1);
-
-//     print = 
-//     "      R-----N:(7, h)P:(5, f)\n"
-//     "Root--N:(5, f)P:(Null)\n"
-//     "      L-----N:(3, d)P:(5, f)\n";
-//     assert(bst->toString(toStringObj, false, true) == print);
-    
-//     bst->add(s1, compare);
-//     assert(bst->root->val.field_1 == 5);
-//     assert(bst->root->left->val.field_1 == 3);
-//     assert(bst->root->right->val.field_1 == 7);
-//     assert(bst->root->left->left->val.field_1 == 1);
-//     assert(bst->size() == 4);
-//     assert(bst->height() == 2);
-
-//     print =
-//     "      R-----N:(7, h)P:(5, f)\n"
-//     "Root--N:(5, f)P:(Null)\n"
-//     "      L-----N:(3, d)P:(5, f)\n"
-//     "            L-----N:(1, b)P:(3, d)\n";
-//     assert(bst->toString(toStringObj, false, true) == print);
-
-//     bst->add(s4, compare);
-//     assert(bst->root->val.field_1 == 5);
-//     assert(bst->root->left->val.field_1 == 3);
-//     assert(bst->root->right->val.field_1 == 7);
-//     assert(bst->root->left->left->val.field_1 == 1);
-//     assert(bst->root->left->right->val.field_1 == 4);
-//     assert(bst->size() == 5);
-//     assert(bst->height() == 2);
-
-//     print =
-//     "      R-----N:(7, h)P:(5, f)\n"
-//     "Root--N:(5, f)P:(Null)\n"
-//     "      |     R-----N:(4, e)P:(3, d)\n"
-//     "      L-----N:(3, d)P:(5, f)\n"
-//     "            L-----N:(1, b)P:(3, d)\n";
-//     assert(bst->toString(toStringObj, false, true) == print);
+    // ---- Test add() methods ----
+    assert(brt->root == nullptr);
+    assert(brt->size() == 0);
+    assert(brt->height() == -1);
 
 
-//     bst->add(s6, compare);
-//     assert(bst->root->right->left->val.field_1 == 6);
-//     assert(bst->size() == 6);
-//     assert(bst->height() == 2);
+    brt->add(s0, compare);
+    // Root--N:(0, a) BLACK
+    assert(brt->root->val.field_1 == 0);
+    assert(brt->root->color == 0);
 
-//     print =
-//     "      R-----N:(7, h)P:(5, f)\n"
-//     "      |     L-----N:(6, g)P:(7, h)\n"
-//     "Root--N:(5, f)P:(Null)\n"
-//     "      |     R-----N:(4, e)P:(3, d)\n"
-//     "      L-----N:(3, d)P:(5, f)\n"
-//     "            L-----N:(1, b)P:(3, d)\n";
-//     assert(bst->toString(toStringObj, false, true) == print);
+    assert(brt->size() == 1);
+    assert(brt->height() == 0);
 
-//     bst->add(s9, compare);
-//     assert(bst->root->right->right->val.field_1 == 9);
-//     assert(bst->size() == 7);
-//     assert(bst->height() == 2);
+    brt->add(s1, compare);
+    //       R-----N:(1, b) RED
+    // Root--N:(0, a) BLACK
+    assert(brt->root->val.field_1 == 0);
+    assert(brt->root->color == 0);
 
-//     print =
-//     "            R-----N:(9, j)P:(7, h)\n"
-//     "      R-----N:(7, h)P:(5, f)\n"
-//     "      |     L-----N:(6, g)P:(7, h)\n"
-//     "Root--N:(5, f)P:(Null)\n"
-//     "      |     R-----N:(4, e)P:(3, d)\n"
-//     "      L-----N:(3, d)P:(5, f)\n"
-//     "            L-----N:(1, b)P:(3, d)\n";
-//     assert(bst->toString(toStringObj, false, true) == print);
+    assert(brt->root->right->val.field_1 == 1);
+    assert(brt->root->right->color == 1);
 
-//     bst->add(s0, compare);
-//     assert(bst->root->left->left->left->val.field_1 == 0);
-//     assert(bst->size() == 8);
-//     assert(bst->height() == 3);
+    assert(brt->size() == 2);
+    assert(brt->height() == 1);
 
-//     print =
-//     "            R-----N:(9, j)P:(7, h)\n"
-//     "      R-----N:(7, h)P:(5, f)\n"
-//     "      |     L-----N:(6, g)P:(7, h)\n"
-//     "Root--N:(5, f)P:(Null)\n"
-//     "      |     R-----N:(4, e)P:(3, d)\n"
-//     "      L-----N:(3, d)P:(5, f)\n"
-//     "            L-----N:(1, b)P:(3, d)\n"
-//     "                  L-----N:(0, a)P:(1, b)\n";
-//     assert(bst->toString(toStringObj, false, true) == print);
+    brt->add(s2, compare);
+    //       R-----N:(2, c) RED
+    // Root--N:(1, b) BLACK
+    //       L-----N:(0, a) RED
+    assert(brt->root->val.field_1 == 1);
+    assert(brt->root->color == 0);
 
-//     bst->add(s2, compare);
-//     assert(bst->root->left->left->right->val.field_1 == 2);
-//     assert(bst->size() == 9);
-//     assert(bst->height() == 3);
+    assert(brt->root->right->val.field_1 == 2);
+    assert(brt->root->right->color == 1);
+    assert(brt->root->left->val.field_1 == 0);
+    assert(brt->root->left->color == 1);
 
-//     print =
-//     "            R-----N:(9, j)P:(7, h)\n"
-//     "      R-----N:(7, h)P:(5, f)\n"
-//     "      |     L-----N:(6, g)P:(7, h)\n"
-//     "Root--N:(5, f)P:(Null)\n"
-//     "      |     R-----N:(4, e)P:(3, d)\n"
-//     "      L-----N:(3, d)P:(5, f)\n"
-//     "            |     R-----N:(2, c)P:(1, b)\n"
-//     "            L-----N:(1, b)P:(3, d)\n"
-//     "                  L-----N:(0, a)P:(1, b)\n";
-//     assert(bst->toString(toStringObj, false, true) == print);
+    assert(brt->size() == 3);
+    assert(brt->height() == 1);
 
-//     bst->add(s8, compare);
-//     assert(bst->root->right->right->left->val.field_1 == 8);
-//     assert(bst->size() == 10);
-//     assert(bst->height() == 3);
 
-//     print =
-//     "            R-----N:(9, j)P:(7, h)\n"
-//     "            |     L-----N:(8, i)P:(9, j)\n"
-//     "      R-----N:(7, h)P:(5, f)\n"
-//     "      |     L-----N:(6, g)P:(7, h)\n"
-//     "Root--N:(5, f)P:(Null)\n"
-//     "      |     R-----N:(4, e)P:(3, d)\n"
-//     "      L-----N:(3, d)P:(5, f)\n"
-//     "            |     R-----N:(2, c)P:(1, b)\n"
-//     "            L-----N:(1, b)P:(3, d)\n"
-//     "                  L-----N:(0, a)P:(1, b)\n";
-//     assert(bst->toString(toStringObj, false, true) == print);
+    brt->add(s5, compare);
+    //             R-----N:(5, e) RED
+    //       R-----N:(2, c) BLACK
+    // Root--N:(1, b) BLACK
+    //       L-----N:(0, a) BLACK
+    assert(brt->root->val.field_1 == 1);
+    assert(brt->root->color == 0);
 
-//     bst->add(s10, compare);
-//     assert(bst->root->right->right->right->val.field_1 == 10);
-//     assert(bst->size() == 11);
-//     assert(bst->height() == 3);
+    assert(brt->root->right->val.field_1 == 2);
+    assert(brt->root->right->color == 0);
+    assert(brt->root->left->val.field_1 == 0);
+    assert(brt->root->left->color == 0);
 
-//     print =
-//     "                  R-----N:(10, k)P:(9, j)\n"
-//     "            R-----N:(9, j)P:(7, h)\n"
-//     "            |     L-----N:(8, i)P:(9, j)\n"
-//     "      R-----N:(7, h)P:(5, f)\n"
-//     "      |     L-----N:(6, g)P:(7, h)\n"
-//     "Root--N:(5, f)P:(Null)\n"
-//     "      |     R-----N:(4, e)P:(3, d)\n"
-//     "      L-----N:(3, d)P:(5, f)\n"
-//     "            |     R-----N:(2, c)P:(1, b)\n"
-//     "            L-----N:(1, b)P:(3, d)\n"
-//     "                  L-----N:(0, a)P:(1, b)\n";
-//     assert(bst->toString(toStringObj, false, true) == print);
+    assert(brt->root->right->right->val.field_1 == 5);
+    assert(brt->root->right->right->color == 1);
 
-//     // ---- Test find() methods ----
-//     assert((bst->find(s1, compare))->val.field_1 == 1);
-//     assert((bst->find(s3, compare))->val.field_1 == 3);
-//     assert((bst->find(s5, compare))->val.field_1 == 5);
-//     assert((bst->find(s7, compare))->val.field_1 == 7);
-//     assert((bst->find(s9, compare))->val.field_1 == 9);
-//     assert((bst->find(s11, compare)) == nullptr);
+    assert(brt->size() == 4);
+    assert(brt->height() == 2);
 
-//     // ---- Test preorder(), inorder() methods ----
-//     std::vector<SomeObject> pre = bst->preorder();
-//     std::vector<SomeObject> preTest = { s5, s3, s1, s0, s2, s4, s7, s6, s9, s8, s10 };
-//     assert(pre == preTest);
-    
-//     std::vector<SomeObject> in = bst->inorder();
-//     std::vector<SomeObject> inTest = { s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10 };
-//     assert(in == inTest);
+    brt->add(s3, compare);
+    //             R-----N:(5, e) RED
+    //       R-----N:(3, d) BLACK
+    //       |     L-----N:(2, c) RED
+    // Root--N:(1, b) BLACK
+    //       L-----N:(0, a) BLACK
+    assert(brt->root->val.field_1 == 1);
+    assert(brt->root->color == 0);
 
-//     // ---- Test remove() methods ----
-//     bst->remove(s10, compare);
-//     assert(bst->size() == 10);
-//     assert(bst->height() == 3);
+    assert(brt->root->right->val.field_1 == 3);
+    assert(brt->root->right->color == 0);
+    assert(brt->root->left->val.field_1 == 0);
+    assert(brt->root->left->color == 0);
 
-//     print =
-//     "            R-----N:(9, j)P:(7, h)\n"
-//     "            |     L-----N:(8, i)P:(9, j)\n"
-//     "      R-----N:(7, h)P:(5, f)\n"
-//     "      |     L-----N:(6, g)P:(7, h)\n"
-//     "Root--N:(5, f)P:(Null)\n"
-//     "      |     R-----N:(4, e)P:(3, d)\n"
-//     "      L-----N:(3, d)P:(5, f)\n"
-//     "            |     R-----N:(2, c)P:(1, b)\n"
-//     "            L-----N:(1, b)P:(3, d)\n"
-//     "                  L-----N:(0, a)P:(1, b)\n";
-//     assert(bst->toString(toStringObj, false, true) == print);
+    assert(brt->root->right->right->val.field_1 == 5);
+    assert(brt->root->right->right->color == 1);
+    assert(brt->root->right->left->val.field_1 == 2);
+    assert(brt->root->right->left->color == 1);
 
-//     bst->remove(s9, compare);
-//     assert(bst->size() == 9);
-//     assert(bst->height() == 3);
+    assert(brt->size() == 5);
+    assert(brt->height() == 2);
 
-//     print =
-//     "            R-----N:(8, i)P:(7, h)\n"
-//     "      R-----N:(7, h)P:(5, f)\n"
-//     "      |     L-----N:(6, g)P:(7, h)\n"
-//     "Root--N:(5, f)P:(Null)\n"
-//     "      |     R-----N:(4, e)P:(3, d)\n"
-//     "      L-----N:(3, d)P:(5, f)\n"
-//     "            |     R-----N:(2, c)P:(1, b)\n"
-//     "            L-----N:(1, b)P:(3, d)\n"
-//     "                  L-----N:(0, a)P:(1, b)\n";
-//     assert(bst->toString(toStringObj, false, true) == print);
+    brt->add(s6, compare);
+    //                   R-----N:(6, f) RED
+    //             R-----N:(5, e) BLACK
+    //       R-----N:(3, d) RED
+    //       |     L-----N:(2, c) BLACK
+    // Root--N:(1, b) BLACK
+    //       L-----N:(0, a) BLACK
 
-//     bst->remove(s7, compare);
-//     assert(bst->size() == 8);
-//     assert(bst->height() == 3);
+    assert(brt->root->val.field_1 == 1);
+    assert(brt->root->color == 0);
 
-//     print =
-//     "            R-----N:(8, i)P:(6, g)\n"
-//     "      R-----N:(6, g)P:(5, f)\n"
-//     "Root--N:(5, f)P:(Null)\n"
-//     "      |     R-----N:(4, e)P:(3, d)\n"
-//     "      L-----N:(3, d)P:(5, f)\n"
-//     "            |     R-----N:(2, c)P:(1, b)\n"
-//     "            L-----N:(1, b)P:(3, d)\n"
-//     "                  L-----N:(0, a)P:(1, b)\n";
-//     assert(bst->toString(toStringObj, false, true) == print);
+    assert(brt->root->right->val.field_1 == 3);
+    assert(brt->root->right->color == 1);
+    assert(brt->root->left->val.field_1 == 0);
+    assert(brt->root->left->color == 0);
 
-//     bst->remove(s5, compare);
-//     assert(bst->size() == 7);
-//     assert(bst->height() == 3);
+    assert(brt->root->right->right->val.field_1 == 5);
+    assert(brt->root->right->right->color == 0);
+    assert(brt->root->right->left->val.field_1 == 2);
+    assert(brt->root->right->left->color == 0);
 
-//     print =
-//     "            R-----N:(8, i)P:(6, g)\n"
-//     "      R-----N:(6, g)P:(4, e)\n"
-//     "Root--N:(4, e)P:(Null)\n"
-//     "      L-----N:(3, d)P:(4, e)\n"
-//     "            |     R-----N:(2, c)P:(1, b)\n"
-//     "            L-----N:(1, b)P:(3, d)\n"
-//     "                  L-----N:(0, a)P:(1, b)\n";
-//     assert(bst->toString(toStringObj, false, true) == print);
+    assert(brt->root->right->right->right->val.field_1 == 6);
+    assert(brt->root->right->right->right->color == 1);
 
-//     bst->remove(s1, compare);
-//     assert(bst->size() == 6);
-//     assert(bst->height() == 3);
+    assert(brt->size() == 6);
+    assert(brt->height() == 3);
 
-//     print =
-//     "            R-----N:(8, i)P:(6, g)\n"
-//     "      R-----N:(6, g)P:(4, e)\n"
-//     "Root--N:(4, e)P:(Null)\n"
-//     "      L-----N:(3, d)P:(4, e)\n"
-//     "            |     R-----N:(2, c)P:(0, a)\n"
-//     "            L-----N:(0, a)P:(3, d)\n";
-//     assert(bst->toString(toStringObj, false, true) == print);
+    brt->add(s7, compare);
+    //                   R-----N:(7, g) RED
+    //             R-----N:(6, f) BLACK
+    //             |     L-----N:(5, e) RED
+    //       R-----N:(3, d) RED
+    //       |     L-----N:(2, c) BLACK
+    // Root--N:(1, b) BLACK
+    //       L-----N:(0, a) BLACK
+    assert(brt->root->val.field_1 == 1);
+    assert(brt->root->color == 0);
 
-//     bst->remove(s4, compare);
-//     assert(bst->size() == 5);
-//     assert(bst->height() == 2);
+    assert(brt->root->right->val.field_1 == 3);
+    assert(brt->root->right->color == 1);
+    assert(brt->root->left->val.field_1 == 0);
+    assert(brt->root->left->color == 0);
 
-//     print =
-//     "            R-----N:(8, i)P:(6, g)\n"
-//     "      R-----N:(6, g)P:(3, d)\n"
-//     "Root--N:(3, d)P:(Null)\n"
-//     "      |     R-----N:(2, c)P:(0, a)\n"
-//     "      L-----N:(0, a)P:(3, d)\n";
-//     assert(bst->toString(toStringObj, false, true) == print);
+    assert(brt->root->right->right->val.field_1 == 6);
+    assert(brt->root->right->right->color == 0);
+    assert(brt->root->right->left->val.field_1 == 2);
+    assert(brt->root->right->left->color == 0);
 
-//     // ---- Test clear() methods ----
-//     bst->clear();
-//     assert(bst->size() == 0);
-//     assert(bst->height() == -1);
-//     assert(bst->root == nullptr);
+    assert(brt->root->right->right->right->val.field_1 == 7);
+    assert(brt->root->right->right->right->color == 1);
+    assert(brt->root->right->right->left->val.field_1 == 5);
+    assert(brt->root->right->right->left->color == 1);
+
+    assert(brt->size() == 7);
+    assert(brt->height() == 3);
+
+    brt->add(s4, compare);
+    //             R-----N:(7, h) BLACK
+    //       R-----N:(6, g) RED
+    //       |     L-----N:(5, f) BLACK
+    //       |           L-----N:(4, e) RED
+    // Root--N:(3, d) BLACK
+    //       |     R-----N:(2, c) BLACK
+    //       L-----N:(1, b) RED
+    //             L-----N:(0, a) BLACK
+    assert(brt->root->val.field_1 == 3);
+    assert(brt->root->color == 0);
+
+    assert(brt->root->right->val.field_1 == 6);
+    assert(brt->root->right->color == 1);
+    assert(brt->root->left->val.field_1 == 1);
+    assert(brt->root->left->color == 1);
+
+    assert(brt->root->right->right->val.field_1 == 7);
+    assert(brt->root->right->right->color == 0);
+    assert(brt->root->right->left->val.field_1 == 5);
+    assert(brt->root->right->left->color == 0);
+    assert(brt->root->left->right->val.field_1 == 2);
+    assert(brt->root->left->right->color == 0);
+    assert(brt->root->left->left->val.field_1 == 0);
+    assert(brt->root->left->left->color == 0);
+
+    assert(brt->root->right->left->left->val.field_1 == 4);
+    assert(brt->root->right->left->left->color == 1);
+
+    assert(brt->size() == 8);
+    assert(brt->height() == 3);
+
+    // ---- Test clear() methods ----
+    brt->clear();
+    assert(brt->size() == 0);
+    assert(brt->height() == -1);
+    assert(brt->root == nullptr);
 }
