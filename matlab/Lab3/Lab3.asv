@@ -1,0 +1,176 @@
+clc
+
+%Zadanie 1
+function [res] = pali(text)
+    left = 1; 
+    right = strlength(text);
+    while left < right
+        if text(1, left) ~= text(1, right)
+            res = 'Nie jest palindromem';
+            return;
+        end
+        left = left + 1;
+        right = right - 1;
+    end
+    res = 'Jest palindromem';
+end
+
+pali1 = pali('ala');
+pali2 = pali('kajak');
+pali3 = pali('metnummuntem');
+pali4 = pali('baba');
+
+%Zadanie 2
+function [arr] = buble(arr)
+    swap = true;
+    while swap == true
+        swap = false;
+        for i = 2:(length(arr))
+            if arr(i - 1) > arr(i)
+                temp = arr(i);
+                arr(i) = arr(i - 1);
+                arr(i - 1) = temp;
+                swap = true;
+            end
+        end
+    end
+end
+
+buble1 = buble([1, 2, 5, 8, 7, 2, 3]);
+buble2 = buble([4, 3, 1]);
+buble3 = buble(5);
+buble4 = buble([]);
+
+%Zadanie 3
+function [x1, x2] = fzerowe(a, b, c)
+    delta = b.^2 - 4 * a * c;
+    zerowe = true;
+    
+    if delta > 0
+        x1 = (-b + sqrt(delta)) / (2 * a);
+        x2 = (-b - sqrt(delta)) / (2 * a);
+    elseif delta == 0
+        x1 = (-b) / (2 * a);
+        x2 = x1;
+    else
+        x1 = [];
+        x2 = [];
+        disp('Brak pierwiastkow');
+        zerowe = false;
+    end
+    
+    fun = @(x) a * x.^2 + b * x + c;
+    x = -5:0.1:5;
+    y = fun(x);
+
+    plot(x, y);
+    
+    title('Wykres funkcji kwadratowej');
+    set(gca, 'XAxisLocation', 'origin', 'YAxisLocation', 'origin');
+
+    hold on;
+
+    if (zerowe == true)
+        xPoints = [x1, x2];
+        yPoints = [0, 0];
+
+        plot(xPoints, yPoints, 'ro');
+
+        legend("f(x)=" + a + "x^2+" + b + "x+" + c, "Miejsca zerowe");
+    else
+        legend("f(x)=" + a + "x^2+" + b + "x+" + c);
+    end
+
+    hold off;
+
+end
+
+%[a1, a2] = fzerowe(1, 2, 1);
+%[b1, b2] = fzerowe(1, 1, - 2);
+%[c1, c2] = fzerowe(0, 3, 4);
+%[d1, d2] = fzerowe(-2, 4, 4);
+
+%Zadanie 4
+
+function [winner] = tictactoe(board)
+    winPositions = cat(8, ...
+        [1 1; 1 2; 1 3], ...
+        [2 1; 2 2; 2 3], ...
+        [3 1; 3 2; 3 3], ...
+        [1 1; 2 1; 3 1], ...
+        [1 2; 2 2; 3 2], ...
+        [1 3; 2 3; 3 3], ...
+        [1 1; 2 2; 3 3], ...
+        [1 3; 2 2; 3 1]);
+
+    winner = 2;
+
+    for i = 1:length(winPositions)
+        row = winPositions(1, 1, i);
+        col = winPositions(1, 2, i);
+
+        position1 = board(row, col);
+        if position1 == 1 || position1 == -1
+            for j = 2:3
+                row = winPositions(j, 1, i);
+                col = winPositions(j, 2, i);
+                position23 = board(row, col);
+
+                if position1 ~= position23
+                    break;
+                end
+                
+                if j == 3
+                    winner = position1;
+                end
+            end
+        else
+            winner = 0;
+        end
+        if winner == 1 || winner == -1
+            break;
+        end
+
+    end
+
+    hold on;
+
+    title("TicTacToe")
+    axis([0 3 -3 0]);
+    axis square;
+    set(gca, 'XColor', 'none', 'YColor', 'none');
+    
+    plot([1 1], [-3 0], 'w', 'LineWidth', 2);
+    plot([2 2], [-3 0], 'w', 'LineWidth', 2);
+    
+    plot([3 0], [-1 -1], 'w', 'LineWidth', 2);
+    plot([3 0], [-2 -2], 'w', 'LineWidth', 2);
+    
+    for row = 1:3
+        for col = 1:3
+            if board(row, col) == 1
+                color = 'r';
+            elseif board(row, col) == -1
+                color = 'g';
+            else
+                color = 'none';
+            end
+                rectangle('Position',[(col - 0.95) (-row + 0.05) 0.9 0.9],'FaceColor',color,'EdgeColor','none');
+        end
+    end
+    
+    if (winner == 1)
+        disp("Wygral gracz pierwszy");
+    elseif (winner == -1)
+        disp("Wygral gracz drugi");
+    elseif (winner == 0)
+        disp("Remis");
+    end
+
+    hold off;
+
+end
+board = [1,  0, -1
+         1,  0, -1
+         0,  0,  1];
+tictactoe(board);

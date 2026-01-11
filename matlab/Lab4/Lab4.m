@@ -1,0 +1,141 @@
+%Zadanie 1
+disp('--  Zadanie 1:  --')
+
+format short
+a = 0.2 + 0.2 + 0.2;
+
+fprintf('a == 0.6: %d\n', a == 0.6);
+fprintf('\n')
+% Wartości nie są równe, ponieważ floaty nie są dokładne dla wartości w
+% których ulamki nie są podzielne przez wielokrotność 2 - nie wszystkie 
+% liczby zmiennoprzecinkowe nie mają dokładnej reprezentacji binarnej
+
+%Zadanie 2
+disp('--  Zadanie 2:  --')
+
+met1 = @(x, y) x * y';
+met2 = @(x, y) sum(x .* y);
+
+function [res] = met3(x, y)
+    res = 0;
+    for i = 1:5
+        res = res + x(i) * y(i);
+    end
+end
+
+function [res] = met4(x, y)
+    res = 0;
+    for i = 5:-1:1
+        res = res + x(i) * y(i);
+    end
+end
+
+x = [exp(1), -pi, sqrt(2), -psi(1), log10(2)];
+y = [1486.2497, 878366.9879, -22.37492, 4773714.647, 0.000185049];
+
+resMet1 = met1(x, y);
+resMet2 = met2(x, y);
+resMet3 = met3(x, y);
+resMet4 = met4(x, y);
+
+fprintf('Metoda 1: %.16f\n',resMet1)
+fprintf('Metoda 2: %.16f\n',resMet2)
+fprintf('Metoda 3: %.16f\n',resMet3)
+fprintf('Metoda 4: %.16f\n',resMet4)
+
+err2 = abs(resMet2 - resMet1);
+err3 = abs(resMet3 - resMet1);
+err4 = abs(resMet4 - resMet1);
+
+figure
+bar([0, err2, err3, err4])
+set(gca, 'XTickLabel', {'met1', 'met2', 'met3', 'met4'})
+ylabel('Błąd bezwzględny')
+title('Porównanie błędów bezwzględnych metod')
+
+fprintf('\n')
+
+% Kolejność dodawnia i odejmowania ma znaczenie, ponieważ przy każdej
+% kolejnej operacji następuje zaokrąglenie oraz ucinanie "nieznaczących"
+% bitów
+
+%Zadanie 3
+disp('--  Zadanie 3:  --')
+
+format long
+
+x = 29 / 13;
+y = 29 - 13 * x;
+
+x1 = 29 / 1300;
+y1 = 29 - 1300 * x1;
+
+fprintf('y  = %.16f\n', y)
+
+fprintf('y1 = %.16f\n', y1)
+fprintf('\n')
+
+% Pomimo że powinno wyjść 0, wynik nie jest dokładnie zerowy
+% z powodu błędów reprezentacji i odejmowania liczb bardzo bliskich sobie
+
+%Zadanie 4
+disp('  --Zadanie 4:--  ')
+
+fzad4a = @(x) x - sqrt(1 + x.^2);
+fzad4b = @(x) -1 ./ (x + sqrt(1 + x.^2));
+
+x = 10.^(4:10);
+
+resZad4a = fzad4a(x);
+resZad4b = fzad4b(x);
+
+format long g
+disp('                 x                    fzad4a                    fzad4b')
+disp([x' resZad4a' resZad4b'])
+
+x = single(x);
+
+resZad4a = fzad4a(x);
+resZad4b = fzad4b(x);
+
+format long g
+disp('             x               fzad4a        fzad4b')
+disp([x' resZad4a' resZad4b'])
+
+% Metoda druga jest lepsza, ponieważ unika się odejmowania bardzo bliskich
+% liczb
+% W arytmetyce pojedyńczej single - dokładność jest tracona dużo szybciej
+
+%Zadanie 5
+
+d = 10^(-3);
+x = linspace(2-d, 2+d, 1000);
+
+a = x - 2;
+f1 = a.^4;
+f2 = x.^4 - 8*x.^3 + 24*x.^2 - 32*x + 16;
+
+figure
+plot(x, f1, 'b', 'LineWidth', 2)
+hold on
+plot(x, f2, 'r', 'LineWidth', 2)
+grid on
+xlabel('x')
+ylabel('f(x)')
+title('Porównanie wielomianów')
+legend('(x-2)^4', 'postać rozwinięta')
+
+err = abs(f1 - f2);
+
+max_err = max(err);
+fprintf('Maksymalny błąd bezwzględny: %.4e\n', max_err)
+
+figure
+plot(x, err, 'r', 'LineWidth', 2)
+grid on
+xlabel('x')
+ylabel('|f1(x)-f2(x)|')
+title('Błąd bezwzględny algorytmu 2 względem algorytmu 1')
+
+% Metoda nie rozwinięta jest lepsza, ponieważ w postaci rozwiniętej odejmujemy
+% bardzo bliskie liczby - metoda rozwinięta szybko tracji dokładność

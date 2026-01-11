@@ -62,10 +62,4 @@ Z = 418.9829*2-X.*sin(sqrt(abs(X)))-Y.*sin(sqrt(abs(Y)));
 contour(X,Y,Z, 'ShowText','on');
 
 %Zadanie7
-xp = [200, 300, 425, 420];
-yp = [200, 225, 300, 420];
-hold on
-plot(xp, yp, '-o');
-plot(xp(1), yp(1), 'ro');
-plot(xp(4), yp(4), 'r^');
-hold off
+xp = [200, 300, 425, 420]
