@@ -125,6 +125,13 @@ int main() {
     // Small correctness check
     assertTests(bst);
 
+    // Example of toString();
+    for (int i = 0; i < 20; i++) {
+        bst->add(createRandom(), compare);
+    }
+
+    std::cout << bst->toString(toStringObj, true, false) << std::endl;
+
     // Maximum order: 9 (int overflow)
     int maxOrder = 7;
     int columnWidth = 11;
@@ -573,12 +580,6 @@ void assertTests(BST <SomeObject>* bst) {
     SomeObject s11 = { 11, 'i' };
 
     std::string print;
-    
-    // for (int i = 0; i < 20; i++) {
-    //     bst->add(createRandom(), compare);
-    // }
-
-    // std::cout << bst->toString(toStringObj) << std::endl;
 
     // ---- Test add() methods ----
     assert(bst->root == nullptr);
