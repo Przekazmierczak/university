@@ -226,7 +226,7 @@ size_t UnionFind::findWithCompression(size_t index) {
         findCounter++;
     }
 
-    while (parents[index] != index) {
+    while (parents[index] != root) {
         size_t prevIndex = index;
         index = parents[index];
         parents[prevIndex] = root;
