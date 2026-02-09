@@ -1,0 +1,125 @@
+function [x, n] = newtona(f, a, b, eps)
+    n = 0;
+    h = 10^(-5);
+    pochodnaA = (f(a + h) - f(a - h)) / (2 * h);
+    pochodnaB = (f(b + h) - f(b - h)) / (2 * h);
+
+    if (pochodnaA >= 0 || pochodnaB <= 0)
+        if (f(a) < f(b))
+            x = a;
+        else
+            x = b;
+        end
+        return
+    end
+    
+    x = a;
+    n = n + 1;
+    pochodna = (f(x + h) - f(x - h)) / (2 * h);
+    drugaPochodna = (f(x + h) - 2 * f(x) + f(x - h)) / h ^ 2;
+    x = x - (pochodna / drugaPochodna);
+
+    while (abs(pochodna) > eps)
+        pochodna = (f(x + h) - f(x - h)) / (2 * h);
+        drugaPochodna = (f(x + h) - 2 * f(x) + f(x - h)) / h ^ 2;
+        x = x - (pochodna / drugaPochodna);
+        n = n + 1;
+    end
+end
+
+function [x, n] = polowienie(f, a, b, eps)
+    n = 0;
+    h = 10^(-5);
+    pochodnaA = (f(a + h) - f(a - h)) / (2 * h);
+    pochodnaB = (f(b + h) - f(b - h)) / (2 * h);
+
+    if (pochodnaA >= 0 || pochodnaB <= 0)
+        if (f(a) < f(b))
+            x = a;
+        else
+            x = b;
+        end
+        return
+    end
+
+    while (b - a > eps)
+        n = n + 1;
+
+        xm = (a + b) / 2;
+        L = b - a;
+
+        pochodnaM = (f(xm + h) - f(xm - h)) / (2 * h);
+        if (abs(pochodnaM) < eps)
+            x = xm;
+            return
+        end
+
+        x1 = a + 0.25 * L;
+        x2 = b - 0.25 * L;
+
+        fa = f(a);
+        f1 = f(x1);
+        f2 = f(x2);
+        fb = f(b);
+
+        if (fa >= f1 && fa >= f2 && fa >= fb)
+            a = x1;
+        elseif (fb >= fa && fb >= f1 && fb >= f2)
+            b = x2;
+        else
+            a = x1;
+            b = x2;
+        end
+    end
+
+    x = (a + b) / 2;
+end
+
+clc
+close all
+
+wybor = 2;
+
+switch wybor
+    case 1
+        f = @(x) x.^2 - x;
+        a = 0.25;
+        b = 0.75;
+    case 2
+        f = @(x) (1/2)*x.^2 - (13/7)*x + 11;
+        a = -10;
+        b = 10;
+    case 3
+        f = @(x) x.^4 - 12*x.^3 + x + 4;
+        a = -2;
+        b = 2;
+    otherwise
+        f = @(x) -x.^3 + 3*x.^2 - 3*x;
+        a = -2;
+        b = -1;
+end
+
+eps = 1e-4;
+
+% do zmierzenia czasu wykorzystaj polecenia tic i toc
+tic
+[xb, nb] = newtona(f, a, b, eps);
+disp('Siecznych:')
+fprintf('Wartosc: %f\n', xb)
+fprintf('Liczba iteracji : %i\n', nb)
+fprintf('Czas obliczen: %fs\n', toc)
+
+% do zmierzenia czasu wykorzystaj polecenia tic i toc
+tic
+[xf, nf] = polowienie(f, a, b, eps);
+disp('Stycznych:')
+fprintf('Wartosc: %f\n', xf)
+fprintf('Liczba iteracji : %i\n', nf)
+fprintf('Czas obliczen: %fs\n', toc)
+
+% rysowanie wykresu funkcji f na przedzial [a,b] i zaznaczenie na nich znalezionych miejsc zerowych
+t = a:0.01:b;
+plot(t, f(t))
+hold on;
+plot(xb, f(xb), 'ro')
+plot(xf, f(xf), 'rx')

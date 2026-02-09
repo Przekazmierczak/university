@@ -1,0 +1,97 @@
+function [x, n] = sieczne(f, a, b, tol, ftol)
+    if f(a) * f(b) > 0
+        error ('Funkcja posiada ten sam znak na obu koncach przedzialu')
+    end
+    
+    h = 10^(-5);
+    drugaPochodna = (f(a + h) - 2 * f(a) + f(a - h)) / h ^ 2;
+    if f(a) * drugaPochodna > 0
+        xPrev = a;
+        xCurr = b;
+    else
+        xPrev = b;
+        xCurr = a;
+    end
+
+    xNext = xCurr - f(xCurr) * ((xCurr - xPrev) / (f(xCurr) - f(xPrev)));
+    n = 0;
+
+    while (abs(f(xNext)) > ftol && abs(xNext - xCurr) > tol)
+        xPrev = xCurr;
+        xCurr = xNext;
+        xNext = xCurr - f(xCurr) * ((xCurr - xPrev) / (f(xCurr) - f(xPrev)));
+        n = n + 1;
+    end
+    x = xNext;
+end
+
+function [x, n] = styczne(f, a, b, tol, ftol)
+    if f(a) * f(b) > 0
+        error ('Funkcja posiada ten sam znak na obu koncach przedzialu')
+    end
+    
+    h = 10^(-5);
+    
+    drugaPochodna = (f(a + h) - 2 * f(a) + f(a - h)) / h ^ 2;
+    if f(a) * drugaPochodna > 0
+        x = a;
+    else
+        x = b;
+    end
+
+    pochodna = (f(x + h) - f(x - h)) / 2 * h;
+    xPrev = x;
+    x = x - (f(x) / pochodna);
+    n = 0;
+    while (abs(f(x)) > ftol && abs(x - xPrev) > tol)
+        pochodna = (f(x + h) - f(x - h)) / 2 * h;
+        xPrev = x;
+        x = x - (f(x) / pochodna);
+        n = n + 1;
+    end
+    x = xNext;
+end
+
+clc
+close all
+
+wybor = 2;
+
+switch wybor
+    case 1
+        f = @(x) exp(x - 1) - 2;
+        a = -1;
+        b = 2;
+    case 2
+        f = @(x) 2.^(-x) + exp(x) + 2*cos(x) - 6;
+        a = 1;
+        b = 3;
+    case 3
+        f = @(x) log(x + (2 / 3));
+        a = -1 / 2;
+        b = 2;
+    otherwise
+        f = @(x) x.^3 - 2*x - 5;
+        a = 0;
+        b = 3;
+end
+
+tol = 10^(-5);
+ftol = 10^(-4);
+
+% do zmierzenia czasu wykorzystaj polecenia tic i toc
+[xb, nb] = sieczne(f, a, b, tol, ftol);
+disp(xb)
+disp(nb)
+
+% do zmierzenia czasu wykorzystaj polecenia tic i toc
+% [xf, nf] = styczne(f, a, b, tol, ftol);
+% disp(xf)
+% disp(nf)
+
+% rysowanie wykresu funkcji f na przedzial [a,b] i zaznaczenie na nich znalezionych miejsc zerowych
+t = a:0.01:b;
+plot(t, f(t))
+hold on;
+plot(xb, f(xb), 'ro')
+% plot(xf, f(xf), 'rx')
