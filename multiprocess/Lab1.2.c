@@ -27,7 +27,7 @@ prywatnej zdeklarowanej jawnie i niejawnie (bez zastosowania klauzuli).
 void zad_2_1_jawnie(int multi) {
     int nthreads, tid;
 
-    #pragma omp parallel private(nthreads, tid) if(multi) 
+    #pragma omp parallel private(nthreads, tid) if(multi)
     {
         tid = omp_get_thread_num();
         printf("Hello World from thread = %d\n", tid);
@@ -58,32 +58,22 @@ void zad_2_1_niejawnie(int multi) {
 zdeklarowanej jawnie i niejawnie (bez zastosowania klauzuli).
 */
 void zad_2_2_jawnie(int multi) {
-    int nthreads, tid;
+    int num = 0;
 
-    #pragma omp parallel shared(nthreads, tid) if(multi)
+    #pragma omp parallel shared(num) if(multi)
     {
-        tid = omp_get_thread_num();
-        printf("Hello World from thread = %d\n", tid);
-
-        if (tid == 0){
-            nthreads = omp_get_num_threads();
-            printf("Number of threads = %d\n", nthreads);
-        }
+        num++;
+        printf("Num = %d\n", num);
     }
 }
 
 void zad_2_2_niejawnie(int multi) {
-    int nthreads, tid;
+    int num = 0;
 
     #pragma omp parallel if(multi)
     {
-        tid = omp_get_thread_num();
-        printf("Hello World from thread = %d\n", tid);
-
-        if (tid == 0){
-            nthreads = omp_get_num_threads();
-            printf("Number of threads = %d\n", nthreads);
-        }
+        num++;
+        printf("Num = %d\n", num);
     }
 }
 
@@ -213,7 +203,7 @@ void printMatrixMulStatic(int multi, struct matrix A, struct matrix B) {
     C.col = A.col;
     C.matrix = arrayC;
 
-    #pragma omp parallel for schedule(static) if(multi)
+    #pragma omp parallel for schedule(static) collapse(2) if(multi)
     for (int i = 0; i < A.row; i++) {
         for (int j = 0; j < B.col; j++) {
             C.matrix[i*B.col + j] = 0;
@@ -241,7 +231,7 @@ void printMatrixMulDynamic(int multi, struct matrix A, struct matrix B) {
     C.col = A.col;
     C.matrix = arrayC;
 
-    #pragma omp parallel for schedule(dynamic, 2) num_threads(2) if(multi)
+    #pragma omp parallel for schedule(dynamic, 2) num_threads(3) collapse(2) if(multi)
     for (int i = 0; i < A.row; i++) {
         for (int j = 0; j < B.col; j++) {
             C.matrix[i*B.col + j] = 0;
@@ -349,7 +339,7 @@ void zad_2_7(int multi) {
 }
 
 /*
-2.8 Napisać program w OpenMP do znalezienia summy wszystkich elementów wektora z
+2.8 Napisać program w OpenMP do znalezienia sumy wszystkich elementów wektora z
 zastosowaniem klauzuli reduction.
 */
 void printVectorSum(int multi, struct vector A) {
@@ -456,7 +446,7 @@ int main(int argc, char *argv[]) {
     // singleMultiCompare(zad_2_7);
     // singleMultiCompare(zad_2_8);
     // singleMultiCompare(zad_2_9);
-    singleMultiCompare(zad_2_10);
+    // singleMultiCompare(zad_2_10);
     // singleMultiCompare(zad_2_11);
     // singleMultiCompare(zad_2_12);
 }
