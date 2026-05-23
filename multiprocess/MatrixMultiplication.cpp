@@ -2,74 +2,115 @@
 #include <vector>
 #include <random>
 
+#include <omp.h>
 
-std::vector<std::vector<int>> randomMatrixGenerator(int rowSize, int colSize, int minVal, int maxVal) {
+#include <cassert>
+#include <stdexcept>
 
-    std::vector<std::vector<int>> matrix;
+#include <chrono>
+
+struct Matrix {
+    std::vector<std::vector<int>> val;
+    int ROWS;
+    int COLS;
+
+    Matrix(int row, int col)
+        : val(row, std::vector<int>(col, 0)),
+          ROWS(row),
+          COLS(col) {}
+
+    bool operator==(const Matrix& other) const {
+        if (val.size() != other.val.size()) return 0;
+        if (val[0].size() != other.val[0].size()) return 0;
+
+        for (int i = 0; i < val.size(); i++) {
+            for (int j = 0; j < val[0].size(); j++) {
+                if (val[i][j] != other.val[i][j]) return 0;
+            }
+        }
+        return 1;
+    }
+
+    void print() {
+        for (std::vector<int> row : val) {
+            for (int val : row) {
+                std::cout << val << ", ";
+            }
+            std::cout << std::endl;
+        }
+        std::cout << std::endl;
+    };
+};
+
+Matrix randomMatrixGenerator(int rowSize, int colSize, int minVal, int maxVal) {
+
+    Matrix matrix(rowSize, colSize);
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dist(minVal, maxVal);
 
-    for (int i = 0; i < rowSize; i++) {
-        std::vector<int> newRow;
-        
-        for (int j = 0; j < colSize; j++) {
-            newRow.push_back(dist(gen));
+    for (int i = 0; i < matrix.ROWS; i++) {
+        for (int j = 0; j < matrix.COLS; j++) {
+            matrix.val[i][j] = dist(gen);
         }
-
-        matrix.push_back(newRow);
     }
 
     return matrix;
 }
 
-std::vector<std::vector<int>> matrixMultiplication(std::vector<std::vector<int>> matrix1, std::vector<std::vector<int>> matrix2) {
-    int ROWS1 = matrix1.size();
-    int COLS1 = matrix1[0].size();
+Matrix matrixMultiplication(const Matrix& matrix1, const Matrix& matrix2, bool parallel) {
 
-    int ROWS2 = matrix2.size();
-    int COLS2 = matrix2[0].size();
+    if (matrix1.COLS != matrix2.ROWS) throw std::runtime_error("Incorrect matrix size");
 
-    std::vector<std::vector<int>> resMatrix;
+    Matrix resMatrix(matrix1.ROWS, matrix2.COLS);
 
-
-    for (int i = 0; i < ROWS1; i++) {
-        std::vector<int> resMatrixRow;
-
-        for (int j = 0; j < COLS1; j++) {
-            int newRowVal = 0;
-
-            for (int k = 0; k < COLS1; k++) {
-                newRowVal += matrix1[i][k] * matrix2[k][j];
+    if (!parallel) {
+        for (int i = 0; i < matrix1.ROWS; i++) {
+            for (int j = 0; j < matrix2.COLS; j++) {
+    
+                for (int k = 0; k < matrix1.COLS; k++) {
+                    resMatrix.val[i][j] += matrix1.val[i][k] * matrix2.val[k][j];
+                }
             }
-            resMatrixRow.push_back(newRowVal);
         }
-        resMatrix.push_back(resMatrixRow);
+    } else {
+        #pragma omp parallel for collapse(2)
+        for (int i = 0; i < matrix1.ROWS; i++) {
+            for (int j = 0; j < matrix2.COLS; j++) {
+
+                for (int k = 0; k < matrix1.COLS; k++) {
+                    resMatrix.val[i][j] += matrix1.val[i][k] * matrix2.val[k][j];
+                }
+            }
+        }
     }
 
     return resMatrix;
 };
 
-void print(std::vector<std::vector<int>> matrix) {
-    for (std::vector<int> row : matrix) {
-        for (int val : row) {
-            std::cout << val << ", ";
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
-};
-
 int main() {
-    std::vector<std::vector<int>> matrix1 = randomMatrixGenerator(3, 3, -3, 10);
-    std::vector<std::vector<int>> matrix2 = randomMatrixGenerator(3, 3, -3, 10);
+    Matrix matrix1 = randomMatrixGenerator(1000, 1000, -1000, 1000);
+    Matrix matrix2 = randomMatrixGenerator(1000, 1000, -1000, 1000);
     
-    print(matrix1);
-    print(matrix2);
+    // matrix1.print();
+    // matrix2.print();
 
-    std::vector<std::vector<int>> newMatrix = matrixMultiplication(matrix1, matrix2);
+    auto start = std::chrono::high_resolution_clock::now();
+    Matrix nonparallel = matrixMultiplication(matrix1, matrix2, false);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::cout << "Time non parallel: " << duration.count() << " ms" << std::endl;
 
-    print(newMatrix);
+    start = std::chrono::high_resolution_clock::now();
+    Matrix parallel = matrixMultiplication(matrix1, matrix2, true);
+    end = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    std::cout << "Time parallel: " << duration.count() << " ms" << std::endl;
+
+    assert(nonparallel == parallel);
+
+    // nonparallel.print();
+    // parallel.print();
 
     return 0;
 }
