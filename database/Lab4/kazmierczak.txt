@@ -1,0 +1,114 @@
+ZAD1
+1)
+SELECT productLine, textDescription
+FROM productlines
+
+2)
+SELECT country
+FROM customers
+
+3)
+SELECT DISTINCT country
+FROM customers
+
+4)
+SELECT productName, productCode, quantityInStock
+FROM products
+WHERE quantityInStock > 9000
+
+5)
+SELECT status, comments, customerNumber
+FROM orders
+WHERE status IN ('Cancelled', 'Resolved', 'On Hold')
+
+6)
+SELECT productCode, quantityOrdered, priceEach
+FROM orderdetails
+WHERE quantityOrdered > 80 OR priceEach > 200
+
+7)
+SELECT orderNumber, status
+FROM orders
+WHERE status <> 'Shipped'
+
+8)
+SELECT orderNumber, comments
+FROM orders
+WHERE comments IS NOT NULL
+
+9)
+SELECT productName, buyPrice * quantityInStock AS Wartosc
+FROM products
+
+ZAD2
+1)
+SELECT firstName, lastName, email
+FROM employees
+ORDER BY lastName
+
+2)
+SELECT productName, buyPrice
+FROM products
+ORDER BY buyPrice DESC
+
+3)
+SELECT MIN(buyPrice)
+FROM products
+
+4)
+SELECT MAX(MSRP)
+FROM products
+
+5)
+SELECT SUM(amount)
+FROM payments
+
+6)
+SELECT SUM(quantityOrdered * priceEach)
+FROM orderdetails
+
+7)
+SELECT SUM(buyPrice)
+FROM products
+WHERE productLine = 'Classic Cars'
+
+8)
+SELECT COUNT(productCode)
+FROM products WHERE buyPrice > 50
+
+9)
+SELECT COUNT(customerNumber) FROM customers
+WHERE country IN ('USA', 'UK', 'Australia')
+
+10)
+SELECT COUNT(DISTINCT country)
+FROM customers
+
+10a)
+SELECT country, COUNT(country)
+FROM customers GROUP BY country
+
+11)
+SELECT productLine, SUM(quantityInStock)
+FROM products
+WHERE buyPrice < 30
+GROUP BY productLine
+
+12)
+SELECT customerNumber, SUM(amount) AS sumaWyplat
+FROM payments
+GROUP BY customerNumber
+ORDER BY sumaWyplat DESC
+
+13)
+SELECT productLine, SUM(buyPrice) AS sum
+FROM products
+GROUP BY productLine
+HAVING sum > 1000
+
+14)
+SELECT productScale, COUNT(productScale) AS Liczba
+FROM products
+GROUP BY productScale
+HAVING Liczba >= 10
+ORDER BY Liczba
