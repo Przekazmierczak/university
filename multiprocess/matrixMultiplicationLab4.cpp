@@ -96,32 +96,13 @@ int main() {
 
     Matrix matrix1 = randomMatrixGenerator(1800, 1800, 1, 1);
     Matrix matrix2 = randomMatrixGenerator(1800, 1800, 1, 1);
-    
-    // matrix1.print();
-    // matrix2.print();
 
-    // auto start = std::chrono::high_resolution_clock::now();
-    // Matrix nonparallel = matrixMultiplication(matrix1, matrix2, false);
-    // auto end = std::chrono::high_resolution_clock::now();
-    // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    // std::cout << "Time non parallel: " << duration.count() << " ms" << std::endl;
-
-    // start = std::chrono::high_resolution_clock::now();
-    // Matrix parallel = matrixMultiplication(matrix1, matrix2, true);
-    // end = std::chrono::high_resolution_clock::now();
-    // duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    // std::cout << "Time parallel: " << duration.count() << " ms" << std::endl;
 
     auto start = std::chrono::high_resolution_clock::now();
     Matrix parallel = matrixMultiplication(matrix1, matrix2, true);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     std::cout << "Time non parallel: " << duration.count() << " ms" << std::endl;
-
-    //assert(nonparallel == parallel);
-
-    // nonparallel.print();
-    // parallel.print();
 
     return 0;
 }
