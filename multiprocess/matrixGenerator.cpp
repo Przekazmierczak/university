@@ -48,12 +48,12 @@ struct Matrix {
 };
 
 int main() {
-    int N = 800;
+    int N = 1800;
 
     Matrix A(N, N);
     A.fillOnes();
 
-    if (A.saveToFile("matrix2.txt")) {
+    if (A.saveToFile("matrix1.txt")) {
         std::cout << "Zapisano macierz do pliku\n";
     } else {
         std::cout << "Blad zapisu\n";

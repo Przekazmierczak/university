@@ -109,7 +109,7 @@ Matrix matrixMultiplication(const Matrix& matrix1, const Matrix& matrix2) {
 
     Matrix resMatrix(matrix1.ROWS, matrix2.COLS);
 
-    #pragma omp parallel for collapse(2) schedule(guided, 200)
+    #pragma omp parallel for collapse(2) schedule(static, 1)
     for (int i = 0; i < matrix1.ROWS; i++) {
         for (int j = 0; j < matrix2.COLS; j++) {
             int sum = 0;
@@ -125,8 +125,46 @@ Matrix matrixMultiplication(const Matrix& matrix1, const Matrix& matrix2) {
     return resMatrix;
 };
 
+Matrix matrixMultiplicationCaching(const Matrix& matrix1, const Matrix& matrix2) {
+
+    if (matrix1.COLS != matrix2.ROWS) throw std::runtime_error("Incorrect matrix size");
+
+    Matrix resMatrix(matrix1.ROWS, matrix2.COLS);
+
+    int BLOCK = 254;
+
+    #pragma omp parallel for collapse(2)
+    for (int i = 0; i < matrix1.ROWS; i += BLOCK)
+    {
+        for (int j = 0; j < matrix2.COLS; j += BLOCK)
+        {
+            for (int k = 0; k < matrix1.COLS; k += BLOCK)
+            {
+                int iEnd = std::min(i + BLOCK, matrix1.ROWS);
+                int jEnd = std::min(j + BLOCK, matrix2.COLS);
+                int kEnd = std::min(k + BLOCK, matrix1.COLS);
+
+                for (int ii = i; ii < iEnd; ++ii)
+                {
+                    for (int kk = k; kk < kEnd; ++kk)
+                    {
+                        int curr = matrix1.val[ii][kk];
+
+                        for (int jj = j; jj < jEnd; ++jj)
+                        {
+                            resMatrix.val[ii][jj] +=  curr * matrix2.val[kk][jj];
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return resMatrix;
+};
+
 int main() {
-    omp_set_num_threads(8);
+    omp_set_num_threads(9);
 
     auto start1 = std::chrono::high_resolution_clock::now();
     Matrix matrix1 = loadMatrix("matrix1.txt");
@@ -136,7 +174,7 @@ int main() {
     std::cout << "Time read: " << duration1.count() << " ms" << std::endl;
 
     auto start2 = std::chrono::high_resolution_clock::now();
-    Matrix parallel = matrixMultiplication(matrix1, matrix2);
+    Matrix parallel = matrixMultiplicationCaching(matrix1, matrix2);
     auto end2 = std::chrono::high_resolution_clock::now();
     auto duration2 = std::chrono::duration_cast<std::chrono::milliseconds>(end2 - start2);
     std::cout << "Time para multi: " << duration2.count() << " ms" << std::endl;
