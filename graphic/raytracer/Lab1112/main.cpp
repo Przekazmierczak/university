@@ -161,7 +161,7 @@ int main (int argc, char * const argv[]) {
     }
 
     /// writes image to disk file with gamma correction
-    image.save("output.png", true);
+    image.save("output.png", false);
 
     cv::imshow("image", image.getImage());
     cv::waitKey();
