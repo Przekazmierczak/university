@@ -96,7 +96,7 @@ void eating(Philosopher& philosopher, int& K, int* forks) {
 }
 
 int main() {
-    int K = 100;
+    int K = 1000000;
     int forks[5] = {-1, -1, -1, -1, -1};
 
     Philosopher philosophers[5] = {Philosopher(0), Philosopher(1), Philosopher(2), Philosopher(3), Philosopher(4)};
