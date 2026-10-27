@@ -1,0 +1,18 @@
+Przemysław Kaźmierczak, 15319, 321
+# Program: stoper pomiarów infotainment
+## Przypadki użycia
+| ID | Nazwa | Opis (przebieg główny i alternatywny) |
+|------|-------|---------------------------------------|
+| UC-1 | Wybór zdarzenia | Tester wybiera z listy jeden ze zdefiniowanych scenariuszy |
+| UC-2 | Rozpoczęcie przebiegu | Tester rozpoczyna przebieg przyciskiem enter. Alternatywnie: Tester kończy pomiary, a program generuje raport |
+| UC-3 | Pojedyńczy przebieg | Tester sygnalizuje rozpoczęcie pomiarów wciśnięciem przycisku enter, a program rozpoczyna pomiar czasu. Po zakończeniu każdego z kroków tester naciska klawisz enter, a program zapisuje kolejne pomiary. Po zakończeniu ostatniego z kroków, kończy się przebieg.
+Alternatywnie: W przypadku w którym krok trwa dłużej niż zdefiniowany maksymalny czas, po naciśnięciu przez testera enteru, wyświetlany jest komunikat o przekroczeniu czasu i kończy się aktualny przebieg|
+| UC-4 | Błąd testera | W przypadku naciśnięcia F + enter program powraca do poprzedniego kroku i pauzuje czas, naciśniecie entera rozpoczyna pomiar.
+Alternatywnie:  W przypadku naciśnięcia Q + enter program resetuje przebieg, a raport z poprzedniego przebiegu nie jest generowany |
+## Reguły biznesowe
+| ID | Reguła |
+|------|--------|
+| BR-1 | Raport generowany jest w formacie CSV |
+| BR-2 | Czas pomiaru zaokrąglany jest do pełnej sekundy zgodnie z zasadą: część ułamkowa od 0,5 sekundy w górę, poniżej 0,5 sekundy w dół. |
+| BR-3 | Kolejność kroków jest zdefiniowana |
+| BR-4 | Maksymalny czas kroku jest zdefiniowany |
