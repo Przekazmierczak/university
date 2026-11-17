@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kalkulator programisty</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="calculator">
+        <h1>Kalkulator programisty</h1>
+
+        <div class="display">0</div>
+
+        <section class="bases">
+            <div class="base"><span>HEX</span><span>0</span></div>
+            <div class="base selected"><span>DEC</span><span>0</span></div>
+            <div class="base"><span>OCT</span><span>0</span></div>
+            <div class="base"><span>BIN</span><span>0</span></div>
+        </section>
+
+        <section class="menu1">
+            <button class="selected">Klaw</button>
+            <button>Bity</button>
+            <button>MS</button>
+            <button disabled id="M">M▾</button>
+        </section>
+
+        <section class="menu2">
+            <div class="bitwise">
+                <details>
+                    <summary>Operator bitowy</summary>
+
+                    <div class="operations">
+                        <button>AND</button>
+                        <button>OR</button>
+                        <button>NOT</button>
+                        <button>NAND</button>
+                        <button>NOR</button>
+                        <button>XOR</button>
+                    </div>
+                </details>
+            </div>
+
+            <button id="wordSize">QWORD</button>
+        </section>
+
+        <section class="keys">
+            <button>A</button><button>&lt;&lt;</button><button>&gt;&gt;</button><button>C</button><button>Back</button>
+            <button>B</button><button>(</button><button>)</button><button>%</button><button>÷</button>
+            <button>C</button><button>7</button><button>8</button><button>9</button><button>x</button>
+            <button>D</button><button>4</button><button>5</button><button>6</button><button>-</button>
+            <button>E</button><button>1</button><button>2</button><button>3</button><button>+</button>
+            <button>F</button><button>+-</button><button>0</button><button disabled>,</button><button class="equals">=</button>
+        </section>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>

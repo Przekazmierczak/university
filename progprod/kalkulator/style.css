@@ -1,0 +1,149 @@
+body {
+    margin: 0;
+    padding: 24px;
+    background: #f3f3f3;
+    color: #222;
+    font: 14px "Segoe UI", sans-serif;
+}
+
+.calculator {
+    width: 320px;
+    margin: auto;
+}
+
+h1 {
+    font-size: 20px;
+    font-weight: 400;
+    text-align: center;
+}
+
+.display {
+    padding: 20px 12px;
+    margin: 16px 0;
+    background: white;
+    text-align: right;
+    font-size: 32px;
+    border: 0.5px solid #cbd8e5;
+    border-radius: 6px;
+}
+
+.bases {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 12px;
+    border-radius: 6px;
+}
+
+.base {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 10px;
+    background: #e8e8e8;
+    cursor: pointer;
+}
+
+.selected {
+    border: 1.5px solid #0078d4;;
+}
+
+.keys {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+}
+
+.menu1,
+.menu2 {
+    margin-bottom: 8px;
+}
+
+button,
+select,
+details {
+    height: 36px;
+    border: 0;
+    background: white;
+    color: #222;
+    font: inherit;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 0.5px solid #cbd8e5;
+    box-shadow: 0px 2px 2px #0001;
+}
+
+button:not(:disabled):hover,
+select:hover,
+details:hover {
+    box-shadow: 0px 3px 2px #0003;
+}
+
+button {
+    width: 60px;
+}
+
+#M,
+#wordSize {
+    width: 190px;
+}
+
+select {
+    width: 190px;
+    appearance: none;
+    text-align: center;
+    text-align-last: center;
+}
+
+summary {
+    text-align: center;
+}
+
+summary::-webkit-details-marker {
+    display: none;
+}
+
+details {
+    width: 186px;
+}
+
+#wordSize,
+#M {
+    margin-left: 1px;
+    width: 127px;
+}
+
+button:disabled {
+    background: #eeeeee;
+    color: #999;
+    cursor: default;
+}
+
+.equals {
+    background: #0078d4;
+    color: white;
+}
+
+.bitwise {
+    position: relative;
+    display: inline-block;
+}
+
+.bitwise summary {
+    padding: 10px 20px;
+}
+
+.operations {
+    position: absolute;
+
+    margin-top: 8px;
+    padding-right: 2px;
+    padding-bottom: 2px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    background-color: #f3f3f3;
+}
+
+.operations button {
+    width: 70px;
+    height: 40px;
+}
