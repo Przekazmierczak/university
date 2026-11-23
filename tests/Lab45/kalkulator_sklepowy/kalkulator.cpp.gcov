@@ -1,0 +1,429 @@
+        -:    0:Source:kalkulator.cpp
+        -:    0:Graph:testy-kalkulator.gcno
+        -:    0:Data:testy-kalkulator.gcda
+        -:    0:Runs:1
+        -:    0:Programs:1
+        -:    1:// Kalkulator sklepowy - implementacja logiki obliczen.
+        -:    2:#include "kalkulator.h"
+        -:    3:
+        -:    4:#include <algorithm>
+        -:    5:#include <cctype>
+        -:    6:#include <fstream>
+        -:    7:#include <limits>
+        -:    8:#include <numeric>
+        -:    9:
+        -:   10:namespace {
+        -:   11:
+        -:   12:constexpr Grosze GROSZE_W_ZLOTYM = 100;                  // BR-1
+        -:   13:constexpr std::size_t MAKS_MIEJSC_PO_PRZECINKU = 2;      // BR-1, UC-8
+        -:   14:constexpr std::size_t MAKS_CYFR_ZLOTYCH = 9;             // KWOTA_MAKS
+        -:   15:constexpr std::size_t MAKS_CYFR_LICZBY = 9;              // liczba calkowita bez przepelnienia
+        -:   16:constexpr std::size_t CYFR_W_GRUPIE = 3;                 // BR-1: "1 728,49 zl"
+        -:   17:constexpr int PODSTAWA_DZIESIETNA = 10;
+        -:   18:constexpr std::int64_t SETNE_PROCENTU_W_CALOSCI = 10000; // UC-3: 100,00 % = 10000
+        -:   19:constexpr Grosze NAJMNIEJSZY_BANKNOT = 1000;             // UC-4: banknoty od 10 zl
+        -:   20:constexpr long long MAKS_SZTUK = 9999;                   // BR-5
+        -:   21:constexpr long long DOZWOLONE_STAWKI_VAT[] = {23, 8, 5, 0}; // BR-6
+        -:   22:constexpr long long PROCENT_CALOSCI = 100;               // BR-6
+        -:   23:
+function _ZN12_GLOBAL__N_14bladERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEE called 9 returned 100% blocks executed 100%
+        9:   24:WynikParsowania blad(const std::string& komunikat) {
+        9:   25:    return {false, 0, komunikat};
+        -:   26:}
+        -:   27:
+function _ZN12_GLOBAL__N_18czyCyfraEc called 75 returned 100% blocks executed 100%
+       75:   28:bool czyCyfra(char znak) {
+       75:   29:    return std::isdigit(static_cast<unsigned char>(znak)) != 0;
+        -:   30:}
+        -:   31:
+function _ZN12_GLOBAL__N_18czyCyfryERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEE called 17 returned 100% blocks executed 100%
+       17:   32:bool czyCyfry(const std::string& tekst) {
+       17:   33:    return !tekst.empty() && std::all_of(tekst.begin(), tekst.end(), czyCyfra);
+branch  0 taken 24%
+branch  1 taken 76%
+        -:   34:}
+        -:   35:
+function _ZN12_GLOBAL__N_18naLiczbeERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEE called 3 returned 100% blocks executed 100%
+        3:   36:std::int64_t naLiczbe(const std::string& cyfry) {
+function _ZZN12_GLOBAL__N_18naLiczbeERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEEENK3$_0clExc called 5 returned 100% blocks executed 100%
+        8:   37:    return std::accumulate(cyfry.begin(), cyfry.end(), std::int64_t{0}, [](std::int64_t liczba, char znak) {
+        5:   38:        return liczba * PODSTAWA_DZIESIETNA + (znak - '0');
+        -:   39:    });
+        -:   40:}
+        -:   41:
+        -:   42:// Komunikat dla pierwszego niedozwolonego znaku; pusty, gdy sa tylko cyfry i przecinki (UC-8, BR-2).
+function _ZN12_GLOBAL__N_112sprawdzZnakiERKNSt3__112basic_stringIcNS0_11char_traitsIcEENS0_9allocatorIcEEEE called 9 returned 100% blocks executed 100%
+        9:   43:std::string sprawdzZnaki(const std::string& tekst) {
+       43:   44:    for (const char znak : tekst) {
+branch  0 taken 88%
+branch  1 taken 12%
+       38:   45:        if (znak == '-') {
+branch  0 taken 97%
+branch  1 taken 3%
+        1:   46:            return "Kwota nie moze byc ujemna.";
+        -:   47:        }
+       37:   48:        if (znak == '.') {
+branch  0 taken 95%
+branch  1 taken 5%
+        2:   49:            return "Separatorem dziesietnym jest przecinek, np. 12,50.";
+        -:   50:        }
+       35:   51:        if (znak != ',' && !czyCyfra(znak)) {
+branch  0 taken 89%
+branch  1 taken 11%
+branch  2 taken 97%
+branch  3 taken 3%
+        1:   52:            return "To nie jest liczba.";
+        -:   53:        }
+        -:   54:    }
+        5:   55:    return "";
+        9:   56:}
+        -:   57:
+function _ZN12_GLOBAL__N_15modulEx called 54 returned 100% blocks executed 100%
+       54:   58:std::int64_t modul(std::int64_t liczba) {
+       54:   59:    return liczba < 0 ? -liczba : liczba;
+branch  0 taken 2%
+branch  1 taken 98%
+        -:   60:}
+        -:   61:
+        -:   62:// CR-11: iloczyn sprawdzany przed mnozeniem, zeby nie przepelnic std::int64_t.
+function _ZN12_GLOBAL__N_119czyIloczynMiesciSieExx called 7 returned 100% blocks executed 100%
+        7:   63:bool czyIloczynMiesciSie(std::int64_t a, std::int64_t b) {
+        7:   64:    return a == 0 || modul(b) <= std::numeric_limits<std::int64_t>::max() / modul(a);
+branch  0 taken 86%
+branch  1 taken 14%
+        -:   65:}
+        -:   66:
+        -:   67:}  // namespace
+        -:   68:
+function _Z11parsujKwoteRKNSt3__112basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEE called 10 returned 100% blocks executed 76%
+       10:   69:WynikParsowania parsujKwote(const std::string& tekst) {
+       10:   70:    if (tekst.empty()) {
+branch  0 taken 90%
+branch  1 taken 10%
+        1:   71:        return blad("Wartosc nie moze byc pusta.");
+branch  0 taken 100%
+branch  1 taken 0%
+        -:   72:    }
+        9:   73:    const std::string niedozwolony = sprawdzZnaki(tekst);
+        9:   74:    if (!niedozwolony.empty()) {
+branch  0 taken 44%
+branch  1 taken 56%
+        4:   75:        return blad(niedozwolony);
+branch  0 taken 100%
+branch  1 taken 0%
+        -:   76:    }
+        5:   77:    const std::size_t przecinek = tekst.find(',');
+        5:   78:    const std::string zlote = tekst.substr(0, przecinek);
+branch  0 taken 100%
+branch  1 taken 0%
+        5:   79:    const std::string grosze = przecinek == std::string::npos ? "" : tekst.substr(przecinek + 1);
+branch  0 taken 20%
+branch  1 taken 80%
+branch  2 taken 100%
+branch  3 taken 0%
+branch  4 taken 100%
+branch  5 taken 0%
+        5:   80:    if (!czyCyfry(zlote) || (przecinek != std::string::npos && !czyCyfry(grosze))) {
+branch  0 taken 100%
+branch  1 taken 0%
+branch  2 taken 80%
+branch  3 taken 20%
+branch  4 taken 75%
+branch  5 taken 25%
+branch  6 taken 100%
+branch  7 taken 0%
+branch  8 taken 67%
+branch  9 taken 33%
+        2:   81:        return blad("Niepoprawny zapis kwoty.");
+branch  0 taken 100%
+branch  1 taken 0%
+branch  2 taken 100%
+branch  3 taken 0%
+        -:   82:    }
+        3:   83:    if (grosze.size() > MAKS_MIEJSC_PO_PRZECINKU) {
+branch  0 taken 33%
+branch  1 taken 67%
+        1:   84:        return blad("Zbyt wiele miejsc po przecinku (najwyzej 2).");
+branch  0 taken 100%
+branch  1 taken 0%
+branch  2 taken 100%
+branch  3 taken 0%
+        -:   85:    }
+        2:   86:    const std::size_t pierwszaCyfra = zlote.find_first_not_of('0');
+        2:   87:    if (pierwszaCyfra != std::string::npos && zlote.size() - pierwszaCyfra > MAKS_CYFR_ZLOTYCH) {
+branch  0 taken 100%
+branch  1 taken 0%
+branch  2 taken 50%
+branch  3 taken 50%
+        1:   88:        return blad("Kwota jest zbyt duza (najwyzej 999 999 999,99 zl).");
+branch  0 taken 100%
+branch  1 taken 0%
+branch  2 taken 0%
+branch  3 taken 100%
+        -:   89:    }
+        1:   90:    const Grosze groszeKwoty = grosze.empty() ? 0 : naLiczbe(grosze);
+branch  0 taken 100%
+branch  1 taken 0%
+branch  2 taken 100%
+branch  3 taken 0%
+        1:   91:    return {true, naLiczbe(zlote) * GROSZE_W_ZLOTYM + groszeKwoty, ""};
+branch  0 taken 100%
+branch  1 taken 0%
+branch  2 taken 100%
+branch  3 taken 0%
+       10:   92:}
+        -:   93:
+function _Z21parsujLiczbeCalkowitaRKNSt3__112basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEERx called 9 returned 100% blocks executed 77%
+        9:   94:bool parsujLiczbeCalkowita(const std::string& tekst, long long& liczba) {
+        9:   95:    const bool ujemna = !tekst.empty() && tekst[0] == '-';
+branch  0 taken 11%
+branch  1 taken 89%
+        9:   96:    const std::string cyfry = ujemna ? tekst.substr(1) : tekst;
+branch  0 taken 22%
+branch  1 taken 78%
+        9:   97:    if (!czyCyfry(cyfry) || cyfry.size() > MAKS_CYFR_LICZBY) {
+branch  0 taken 100%
+branch  1 taken 0%
+branch  2 taken 22%
+branch  3 taken 78%
+branch  4 taken 50%
+branch  5 taken 50%
+        8:   98:        return false;
+        -:   99:    }
+        1:  100:    liczba = ujemna ? -naLiczbe(cyfry) : naLiczbe(cyfry);
+branch  0 taken 100%
+branch  1 taken 0%
+branch  2 taken 100%
+branch  3 taken 0%
+branch  4 never executed
+branch  5 never executed
+        1:  101:    return true;
+        9:  102:}
+        -:  103:
+function _Z13formatujKwotex called 10 returned 100% blocks executed 52%
+       10:  104:std::string formatujKwote(Grosze kwota) {
+       10:  105:    const Grosze bezZnaku = modul(kwota);
+       10:  106:    const std::string zlote = std::to_string(bezZnaku / GROSZE_W_ZLOTYM);
+       10:  107:    std::string zloteWGrupach = zlote;
+branch  0 taken 100%
+branch  1 taken 0%
+       10:  108:    if (zloteWGrupach.size() > CYFR_W_GRUPIE) {
+branch  0 taken 40%
+branch  1 taken 60%
+        4:  109:        zloteWGrupach.insert(zloteWGrupach.size() - CYFR_W_GRUPIE, " ");
+branch  0 taken 100%
+branch  1 taken 0%
+        4:  110:    }
+       10:  111:    std::string grosze = std::to_string(bezZnaku % GROSZE_W_ZLOTYM);
+branch  0 taken 100%
+branch  1 taken 0%
+       10:  112:    if (grosze.size() < MAKS_MIEJSC_PO_PRZECINKU) {
+branch  0 taken 80%
+branch  1 taken 20%
+        8:  113:        grosze.insert(0, "0");
+branch  0 taken 100%
+branch  1 taken 0%
+        8:  114:    }
+       10:  115:    return (kwota < 0 ? "-" : "") + zloteWGrupach + "," + grosze + " zl";
+branch  0 taken 100%
+branch  1 taken 0%
+branch  2 taken 100%
+branch  3 taken 0%
+branch  4 taken 100%
+branch  5 taken 0%
+branch  6 taken 0%
+branch  7 taken 100%
+       10:  116:}
+        -:  117:
+function _Z24zaokraglijPolowkowoWGorexx called 12 returned 100% blocks executed 100%
+       12:  118:std::int64_t zaokraglijPolowkowoWGore(std::int64_t licznik, std::int64_t mianownik) {
+       12:  119:    std::int64_t iloraz = licznik / mianownik;
+       12:  120:    const std::int64_t reszta = licznik % mianownik;
+        -:  121:    // reszta wieksza od polowy mianownika, zapisane bez mnozenia 2 * reszta (przepelnienie)
+       12:  122:    if (reszta > mianownik - reszta) {
+branch  0 taken 92%
+branch  1 taken 8%
+        1:  123:        ++iloraz;
+        1:  124:    }
+       12:  125:    return iloraz;
+        -:  126:}
+        -:  127:
+function _Z17czyZnaneDzialaniec called 11 returned 100% blocks executed 100%
+       11:  128:bool czyZnaneDzialanie(char dzialanie) {
+       11:  129:    return dzialanie == '+' || dzialanie == '-' || dzialanie == '*' || dzialanie == '/';
+branch  0 taken 82%
+branch  1 taken 18%
+branch  2 taken 89%
+branch  3 taken 11%
+branch  4 taken 63%
+branch  5 taken 38%
+        -:  130:}
+        -:  131:
+function _Z6obliczxcxRx called 11 returned 100% blocks executed 100%
+       11:  132:StatusDzialania oblicz(Grosze a, char dzialanie, Grosze b, Grosze& wynik) {
+       11:  133:    if (!czyZnaneDzialanie(dzialanie)) {
+branch  0 taken 9%
+branch  1 taken 91%
+        1:  134:        return StatusDzialania::NieznaneDzialanie;
+        -:  135:    }
+       10:  136:    if (modul(a) > KWOTA_MAKS || modul(b) > KWOTA_MAKS) {
+branch  0 taken 90%
+branch  1 taken 10%
+branch  2 taken 11%
+branch  3 taken 89%
+        2:  137:        return StatusDzialania::ZbytDuzaKwota;
+        -:  138:    }
+        8:  139:    Grosze nowyWynik = 0;
+        8:  140:    if (dzialanie == '+') {
+branch  0 taken 25%
+branch  1 taken 75%
+        2:  141:        nowyWynik = a + b;
+        8:  142:    } else if (dzialanie == '-') {
+branch  0 taken 17%
+branch  1 taken 83%
+        1:  143:        nowyWynik = a - b;
+        6:  144:    } else if (dzialanie == '*') {
+branch  0 taken 60%
+branch  1 taken 40%
+        3:  145:        if (!czyIloczynMiesciSie(a, b)) {
+branch  0 taken 67%
+branch  1 taken 33%
+        1:  146:            return StatusDzialania::ZbytDuzaKwota;
+        -:  147:        }
+        2:  148:        nowyWynik = a * b / GROSZE_W_ZLOTYM;
+        2:  149:    } else {
+        2:  150:        if (b == 0) {
+branch  0 taken 50%
+branch  1 taken 50%
+        1:  151:            return StatusDzialania::DzieleniePrzezZero;
+        -:  152:        }
+        1:  153:        nowyWynik = zaokraglijPolowkowoWGore(a * GROSZE_W_ZLOTYM * (b < 0 ? -1 : 1), modul(b));
+        -:  154:    }
+        6:  155:    if (modul(nowyWynik) > KWOTA_MAKS) {
+branch  0 taken 17%
+branch  1 taken 83%
+        1:  156:        return StatusDzialania::ZbytDuzaKwota;
+        -:  157:    }
+        5:  158:    wynik = nowyWynik;
+        5:  159:    return StatusDzialania::Poprawne;
+       11:  160:}
+        -:  161:
+function _Z13obliczProcentxxR13WynikProcentu called 4 returned 100% blocks executed 100%
+        4:  162:bool obliczProcent(Grosze kwota, std::int64_t procentSetne, WynikProcentu& wynik) {
+        4:  163:    if (!czyIloczynMiesciSie(kwota, procentSetne)) {
+branch  0 taken 25%
+branch  1 taken 75%
+        1:  164:        return false;
+        -:  165:    }
+        3:  166:    const Grosze wartoscProcentu = zaokraglijPolowkowoWGore(kwota * procentSetne, SETNE_PROCENTU_W_CALOSCI);
+        3:  167:    if (modul(kwota) + modul(wartoscProcentu) > KWOTA_MAKS) {
+branch  0 taken 33%
+branch  1 taken 67%
+        1:  168:        return false;
+        -:  169:    }
+        2:  170:    wynik = {wartoscProcentu, kwota - wartoscProcentu, kwota + wartoscProcentu};
+        2:  171:    return true;
+        4:  172:}
+        -:  173:
+function _Z8nominalyv called 4 returned 100% blocks executed 71%
+        4:  174:const std::vector<Grosze>& nominaly() {
+        4:  175:    static const std::vector<Grosze> lista = {
+branch  0 taken 25%
+branch  1 taken 75%
+branch  2 taken 0%
+branch  3 taken 100%
+branch  4 taken 100%
+branch  5 taken 0%
+        -:  176:        50000, 20000, 10000, 5000, 2000, 1000,  // banknoty: 500, 200, 100, 50, 20, 10 zl
+        -:  177:        500, 200, 100, 50, 20, 10, 5, 2, 1      // monety: 5, 2, 1 zl, 50, 20, 10, 5, 2, 1 gr
+        -:  178:    };
+        4:  179:    return lista;
+    #####:  180:}
+        -:  181:
+function _Z10czyBanknotx called 37 returned 100% blocks executed 100%
+       37:  182:bool czyBanknot(Grosze nominal) {
+       37:  183:    return nominal > NAJMNIEJSZY_BANKNOT;
+        -:  184:}
+        -:  185:
+function _Z22czyPoprawnaLiczbaSztukx called 2 returned 100% blocks executed 100%
+        2:  186:bool czyPoprawnaLiczbaSztuk(long long liczbaSztuk) {
+        2:  187:    return liczbaSztuk > 0 && liczbaSztuk <= MAKS_SZTUK;
+branch  0 taken 50%
+branch  1 taken 50%
+        -:  188:}
+        -:  189:
+function _Z13sumujSzufladeRKNSt3__16vectorIxNS_9allocatorIxEEEE called 4 returned 100% blocks executed 100%
+        4:  190:SumySzuflady sumujSzuflade(const std::vector<long long>& liczbySztuk) {
+        4:  191:    const std::vector<Grosze>& lista = nominaly();
+        4:  192:    const std::size_t ile = std::min(liczbySztuk.size(), lista.size());
+        4:  193:    SumySzuflady sumy;
+       39:  194:    for (std::size_t i = 0; i < ile; ++i) {
+branch  0 taken 90%
+branch  1 taken 10%
+       35:  195:        const Grosze wartosc = lista[i] * liczbySztuk[i];
+       35:  196:        if (czyBanknot(lista[i])) {
+branch  0 taken 43%
+branch  1 taken 57%
+       15:  197:            sumy.banknoty += wartosc;
+       15:  198:        } else {
+       20:  199:            sumy.bilon += wartosc;
+        -:  200:        }
+       35:  201:    }
+        4:  202:    sumy.razem = sumy.banknoty + sumy.bilon;
+        4:  203:    return sumy;
+        -:  204:}
+        -:  205:
+function _Z21czyDozwolonaStawkaVatx called 2 returned 100% blocks executed 100%
+        2:  206:bool czyDozwolonaStawkaVat(long long stawka) {
+        4:  207:    return std::find(std::begin(DOZWOLONE_STAWKI_VAT), std::end(DOZWOLONE_STAWKI_VAT), stawka)
+        2:  208:           != std::end(DOZWOLONE_STAWKI_VAT);
+        -:  209:}
+        -:  210:
+function _Z10cenaBruttoxx called 5 returned 100% blocks executed 100%
+        5:  211:Grosze cenaBrutto(Grosze netto, long long stawka) {
+        5:  212:    return zaokraglijPolowkowoWGore(netto * (PROCENT_CALOSCI + stawka), PROCENT_CALOSCI);
+        -:  213:}
+        -:  214:
+function _Z12zapiszRaportRKNSt3__112basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEES7_RK12SumySzuflady called 3 returned 100% blocks executed 69%
+        3:  215:bool zapiszRaport(const std::string& nazwaPliku, const std::string& data, const SumySzuflady& sumy) {
+        3:  216:    std::ofstream plik(nazwaPliku, std::ios::app);
+        3:  217:    if (!plik) {
+branch  0 taken 100%
+branch  1 taken 0%
+branch  2 taken 67%
+branch  3 taken 33%
+        1:  218:        return false;
+        -:  219:    }
+        4:  220:    plik << data << ';' << formatujKwote(sumy.banknoty) << ';' << formatujKwote(sumy.bilon) << ';'
+branch  0 taken 100%
+branch  1 taken 0%
+branch  2 taken 100%
+branch  3 taken 0%
+branch  4 taken 100%
+branch  5 taken 0%
+branch  6 taken 100%
+branch  7 taken 0%
+branch  8 taken 100%
+branch  9 taken 0%
+branch 10 taken 100%
+branch 11 taken 0%
+branch 12 taken 100%
+branch 13 taken 0%
+branch 14 taken 100%
+branch 15 taken 0%
+        2:  221:         << formatujKwote(sumy.razem) << '\n';
+branch  0 taken 100%
+branch  1 taken 0%
+branch  2 taken 100%
+branch  3 taken 0%
+branch  4 taken 100%
+branch  5 taken 0%
+        2:  222:    plik.flush();
+branch  0 taken 100%
+branch  1 taken 0%
+        2:  223:    return !plik.fail();
+branch  0 taken 100%
+branch  1 taken 0%
+        3:  224:}
+        -:  225:
+        -:  226:

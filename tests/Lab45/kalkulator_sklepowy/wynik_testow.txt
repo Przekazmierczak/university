@@ -1,0 +1,88 @@
+[doctest] doctest version is "2.5.3"
+[doctest] run with "--help" for options
+===============================================================================
+testy.cpp:49:
+TEST CASE:  UC-4: Wprowadzono 15 wartości 
+
+testy.cpp:55: ERROR: CHECK( sumy.banknoty == banknoty ) is NOT correct!
+  values: CHECK( 150000 == 156000 )
+
+testy.cpp:56: ERROR: CHECK( sumy.bilon == bilony ) is NOT correct!
+  values: CHECK( 7620 == 1620 )
+
+===============================================================================
+testy.cpp:65:
+TEST CASE:  UC-4: Wprowadzono banknot o nominale 10 zl == True
+
+testy.cpp:66: ERROR: CHECK( czyBanknot(1000) == true ) is NOT correct!
+  values: CHECK( false == true )
+
+===============================================================================
+testy.cpp:74:
+TEST CASE:  UC-4: Wprowadzono liczę sztuk 0 == True
+
+testy.cpp:75: ERROR: CHECK( czyPoprawnaLiczbaSztuk(0) == true ) is NOT correct!
+  values: CHECK( false == true )
+
+===============================================================================
+testy.cpp:103:
+TEST CASE:  UC-8: Wprowadzona wartośc 12,5 -> poprawny = true, kwota = 1250, komunikat =  
+
+testy.cpp:106: ERROR: CHECK( wynik.kwota == 1250 ) is NOT correct!
+  values: CHECK( 1205 == 1250 )
+
+===============================================================================
+testy.cpp:150:
+TEST CASE:  BR-4: 0,01 zl / 2,00 zl = 0,01 zl
+
+testy.cpp:153: ERROR: CHECK( wynik == 1 ) is NOT correct!
+  values: CHECK( 0 == 1 )
+
+===============================================================================
+testy.cpp:157:
+TEST CASE:  BR-4: 0,50 * 0,23 ~= 0,12 zl, 0,50 + 0,12 ~= 62 zl, 50 - 0,12 = 38 zl
+
+testy.cpp:160: ERROR: CHECK( wynik.wartoscProcentu == 12 ) is NOT correct!
+  values: CHECK( 11 == 12 )
+
+testy.cpp:161: ERROR: CHECK( wynik.poPodwyzce == 62 ) is NOT correct!
+  values: CHECK( 61 == 62 )
+
+testy.cpp:162: ERROR: CHECK( wynik.poObnizce == 38 ) is NOT correct!
+  values: CHECK( 39 == 38 )
+
+===============================================================================
+testy.cpp:166:
+TEST CASE:  BR-4: 0,50 zl + 0,50 zl * 23% ~= 0,62 zl
+
+testy.cpp:167: ERROR: CHECK( cenaBrutto(50, 23) == 62 ) is NOT correct!
+  values: CHECK( 61 == 62 )
+
+===============================================================================
+testy.cpp:254:
+TEST CASE:  zaokraglijPolowkowoWGore: 5 / 10 = 1
+
+testy.cpp:255: ERROR: CHECK( zaokraglijPolowkowoWGore(5, 10) == 1 ) is NOT correct!
+  values: CHECK( 0 == 1 )
+
+===============================================================================
+testy.cpp:259:
+TEST CASE:  zaokraglijPolowkowoWGore: -5 / 10 = -1
+
+testy.cpp:260: ERROR: CHECK( zaokraglijPolowkowoWGore(-5, 10) == -1 ) is NOT correct!
+  values: CHECK( 0 == -1 )
+
+===============================================================================
+testy.cpp:306:
+TEST CASE:  sumujSzuflade: Wprowadzono 16 wartości 
+
+testy.cpp:312: ERROR: CHECK( sumy.banknoty == banknoty ) is NOT correct!
+  values: CHECK( 150000 == 156000 )
+
+testy.cpp:313: ERROR: CHECK( sumy.bilon == bilony ) is NOT correct!
+  values: CHECK( 7620 == 1620 )
+
+===============================================================================
+[doctest] test cases:  59 | 49 passed | 10 failed | 0 skipped
+[doctest] assertions: 100 | 86 passed | 14 failed |
+[doctest] Status: FAILURE!
